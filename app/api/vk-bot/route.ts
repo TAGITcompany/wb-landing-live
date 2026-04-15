@@ -1,70 +1,71 @@
 import { kv } from '@vercel/kv';
 import { NextResponse } from 'next/server';
 
-// Эти переменные мы пропишем в настройках Vercel позже
-const VK_TOKEN = process.env.VK_TOKEN; 
-const VK_CONFIRMATION = process.env.VK_CONFIRMATION;
-const ADMIN_ID = Number(process.env.ADMIN_ID); 
+const VK_TOKEN = process.env.VK_TOKEN;
+const ADMIN_ID = Number(process.env.ADMIN_ID);
 
 export async function POST(req: Request) {
   try {
     const data = await req.json();
 
-    // 1. Подтверждение сервера для Callback API в ВК
+    // 1. ЛОГИКА ПОДТВЕРЖДЕНИЯ (Берем код из базы данных)
     if (data.type === 'confirmation') {
-      return new Response(VK_CONFIRMATION);
+      // Ищем код в Redis, если его там нет — берем из переменной (на всякий случай)
+      const dynamicConfirmation = await kv.get('vk_confirmation_code') as string;
+      const fallbackConfirmation = process.env.VK_CONFIRMATION;
+      
+      return new Response(dynamicConfirmation || fallbackConfirmation, {
+        headers: { 'Content-Type': 'text/plain' }
+      });
     }
 
-    // 2. Обработка новых сообщений в группе
+    // 2. ОБРАБОТКА СООБЩЕНИЙ
     if (data.type === 'message_new') {
       const { from_id, text } = data.object.message;
 
-      // ЛОГИКА АДМИН-ПАНЕЛИ (ДЛЯ ИРИНЫ)
-      // Если пишет Ирина и сообщение начинается с команды /link
-      if (from_id === ADMIN_ID && text.toLowerCase().startsWith('/link')) {
-        const parts = text.split(' ');
-        const newLink = parts[1]; // Берем саму ссылку после пробела
-        
-        if (!newLink || !newLink.startsWith('http')) {
-          await sendVkMessage(from_id, "❌ Ошибка! Введите корректную ссылку. Пример: /link https://vk.me/join/...");
-          return new Response('ok');
+      // СЕКРЕТНАЯ КОМАНДА ДЛЯ ТЕБЯ И ИРИНЫ
+      // Пишешь боту в ЛС: /set_code b96f109a
+      if (from_id === ADMIN_ID && text.toLowerCase().startsWith('/set_code')) {
+        const newCode = text.split(' ')[1];
+        if (newCode) {
+          await kv.set('vk_confirmation_code', newCode);
+          await sendVkMessage(from_id, `✅ Код подтверждения обновлен на: ${newCode}\nТеперь жми кнопку "Подтвердить" в ВК!`);
         }
-
-        // Сохраняем новую ссылку в базу данных Redis (Vercel KV)
-        await kv.set('current_chat_link', newLink);
-        await sendVkMessage(from_id, `✅ Ссылка успешно обновлена на:\n${newLink}`);
         return new Response('ok');
       }
 
-      // ЛОГИКА ДЛЯ ПОЛЬЗОВАТЕЛЕЙ
-      // Достаем актуальную ссылку из базы данных
-      const savedLink = await kv.get('current_chat_link') as string;
-      const finalLink = savedLink || "https://vk.me/schoolmarketplace"; // Ссылка по умолчанию
+      // ОБЫЧНАЯ ЛОГИКА (Обновление ссылки на чат)
+      if (from_id === ADMIN_ID && text.toLowerCase().startsWith('/link')) {
+        const newLink = text.split(' ')[1];
+        if (newLink && newLink.startsWith('http')) {
+          await kv.set('current_chat_link', newLink);
+          await sendVkMessage(from_id, `✅ Ссылка на чат обновлена!`);
+        }
+        return new Response('ok');
+      }
 
-      const messageText = `Здравствуйте! Рады вашему отклику! 👋\n\nВот актуальная ссылка на чат с Ириной:\n${finalLink}`;
+      // ОТВЕТ ПОЛЬЗОВАТЕЛЮ
+      const savedLink = await kv.get('current_chat_link') as string;
+      const finalLink = savedLink || "https://vk.me/schoolmarketplace";
+      await sendVkMessage(from_id, `Здравствуйте! Вот ссылка на чат с Ириной:\n${finalLink}`);
       
-      await sendVkMessage(from_id, messageText);
       return new Response('ok');
     }
 
     return new Response('ok');
-  } catch (error) {
-    console.error('Bot error:', error);
+  } catch (e) {
     return new Response('ok');
   }
 }
 
-// Вспомогательная функция для отправки сообщений в ВК через API
 async function sendVkMessage(peer_id: number, message: string) {
-  const params = new URLSearchParams({
-    access_token: VK_TOKEN!,
-    peer_id: peer_id.toString(),
-    message: message,
-    random_id: Math.random().toString(),
-    v: '5.131'
-  });
-
-  await fetch(`https://api.vk.com/method/messages.send?${params.toString()}`, {
-    method: 'POST'
+  await fetch(`https://api.vk.com/method/messages.send?v=5.131`, {
+    method: 'POST',
+    body: new URLSearchParams({
+      access_token: VK_TOKEN!,
+      peer_id: peer_id.toString(),
+      message: message,
+      random_id: Math.random().toString()
+    })
   });
 }
