@@ -78,11 +78,12 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // ФУНКЦИЯ ДЛЯ ОТКРЫТИЯ ЧАТА
+// ФУНКЦИЯ ДЛЯ ОТКРЫТИЯ ЧАТА (ИСПРАВЛЕННАЯ)
   const handleOpenChat = () => {
-    bridge.send("VKWebAppOpenURL", { 
-      "url": chatLink 
-    });
+    if (chatLink) {
+      // Открываем ссылку стандартным методом, ВК сам перекинет в мессенджер
+      window.open(chatLink, "_blank", "noopener,noreferrer");
+    }
   };
 
   // ФУНКЦИЯ ДЛЯ ИМЕНИ (БЕЗ ЦИФР)
