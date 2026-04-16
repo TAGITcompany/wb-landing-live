@@ -11,7 +11,6 @@ const ADMIN_ID = Number(process.env.ADMIN_ID);
 export async function POST(req: Request) {
   try {
     const data = await req.json();
-
     // Проверка секретного ключа (чтобы не спамили)
     if (VK_SECRET_KEY && data.secret !== VK_SECRET_KEY) {
       return new Response('bad secret', { status: 403 });
