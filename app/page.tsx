@@ -6,6 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Home() {
+  // --- СОСТОЯНИЯ ДЛЯ ДИНАМИЧЕСКОЙ ССЫЛКИ ---
+  const [chatLink, setChatLink] = useState("https://vk.me/schoolmarketplace");
+
   // Единый таймер для всей страницы — стартуем ровно с 2 минут (120 секунд)
   const [timeLeft, setTimeLeft] = useState(120); 
 
@@ -40,6 +43,14 @@ export default function Home() {
 
   useEffect(() => {
     bridge.send('VKWebAppInit');
+
+    // ФЕТЧИМ АКТУАЛЬНУЮ ССЫЛКУ ИЗ НАШЕГО API
+    fetch('/api/vk-bot')
+      .then(res => res.json())
+      .then(data => {
+        if (data.link) setChatLink(data.link);
+      })
+      .catch(err => console.error("Ошибка загрузки ссылки:", err));
     
     // ЛОГИКА ДИНАМИЧЕСКОЙ ДАТЫ
     const updateEventDate = () => {
@@ -67,6 +78,13 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
+  // ФУНКЦИЯ ДЛЯ ОТКРЫТИЯ ЧАТА
+  const handleOpenChat = () => {
+    bridge.send("VKWebAppOpenURL", { 
+      "url": chatLink 
+    });
+  };
+
   // ФУНКЦИЯ ДЛЯ ИМЕНИ (БЕЗ ЦИФР)
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -89,6 +107,7 @@ export default function Home() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    handleOpenChat(); // При отправке формы тоже открываем чат
   };
 
   const displayMins = Math.floor(timeLeft / 60).toString();
@@ -160,7 +179,10 @@ export default function Home() {
               </div>
             </div>
             <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20 text-white">
-               <button className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}>
+               <button 
+                onClick={handleOpenChat}
+                className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
+               >
                  <span className="transform -translate-y-[8px]">Принять участие</span>
                </button>
             </div>
@@ -221,7 +243,12 @@ export default function Home() {
             </div>
           </div>
           <div className="w-full p-1 rounded-full border-2 border-[#f04a94] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-6 relative z-30 mt-[-145px]">
-             <button className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}><span className="transform -translate-y-[4px]">Принять участие</span></button>
+             <button 
+              onClick={handleOpenChat}
+              className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
+             >
+               <span className="transform -translate-y-[4px]">Принять участие</span>
+             </button>
           </div>
           <div className="flex justify-center gap-6 relative z-30">
             <div className="w-[75px] h-[75px] rounded-full border-[3px] border-[#df00ff] flex flex-col items-center justify-center text-white leading-none bg-[#6c2a93]/50 backdrop-blur-sm relative">

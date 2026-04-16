@@ -56,11 +56,16 @@ export async function POST(req: Request) {
 
 // ЭТА СТРАНИЦА ТЕПЕРЬ ПОКАЖЕТ ОШИБКУ
 export async function GET() {
-  const lastError = await redis.get('last_vk_error');
-  return new Response(
-    `СТАТУС БОТА: РАБОТАЕТ\n\nПОСЛЕДНИЙ ОТВЕТ ОТ ВК:\n${lastError || 'Запросов еще не было'}\n\nADMIN_ID в системе: ${ADMIN_ID}`,
-    { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
-  );
+  const savedLink = await redis.get('current_chat_link');
+  const finalLink = savedLink || "https://vk.me/schoolmarketplace";
+  
+  // Отдаем JSON, который легко прочитать в мини-приложении
+  return new Response(JSON.stringify({ link: finalLink }), {
+    headers: { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*' // Чтобы мини-приложение могло достучаться
+    }
+  });
 }
 
 async function sendVkMessage(peer_id: number, message: string) {
