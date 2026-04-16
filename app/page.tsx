@@ -6,16 +6,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Home() {
-  // Таймер на 2 минуты
+  // Единый таймер для всей страницы — стартуем ровно с 2 минут (120 секунд)
   const [timeLeft, setTimeLeft] = useState(120); 
 
   const [name, setName] = useState("");
+  // Начальное значение телефона с +7
   const [phone, setPhone] = useState("+7");
 
-  // Состояние для даты
+  // Состояние для динамической даты
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
 
-  // Слайдер отзывов
+  // ЛОГИКА СЛАЙДЕРА ОТЗЫВОВ (БЛОК 5 + 6)
   const reviewImages = [
     '/images/reviews_phone.png',
     '/images/phone2.png',
@@ -40,8 +41,9 @@ export default function Home() {
   useEffect(() => {
     bridge.send('VKWebAppInit');
     
+    // ЛОГИКА ДИНАМИЧЕСКОЙ ДАТЫ
     const updateEventDate = () => {
-      let d = new Date(2026, 3, 14, 19, 0);
+      let d = new Date(2026, 3, 14, 19, 0); // 14 Апреля 2026, 19:00
       const now = new Date();
       while (now >= d) {
         d.setDate(d.getDate() + 7);
@@ -65,12 +67,15 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
+  // ФУНКЦИЯ ДЛЯ ИМЕНИ (БЕЗ ЦИФР)
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
+    // Удаляем все цифры из строки
     const filteredVal = val.replace(/[0-9]/g, '');
     setName(filteredVal);
   };
 
+  // Функция для обработки ввода телефона (только цифры после +7)
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
     if (!input.startsWith("+7")) {
@@ -95,9 +100,12 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#2a0e3d] flex justify-center items-start text-white antialiased font-sans">
+      
       <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen">
 
-        {/* СЕКЦИЯ 1 */}
+        {/* ========================================== */}
+        {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН                    */}
+        {/* ========================================== */}
         <section className="bg-[#5a2082] relative pb-20">
           <div className="px-5 pt-8 relative z-10">
             <div className="absolute top-[-10px] left-[5px] w-28 h-32 rotate-[-15deg] z-0 opacity-80">
@@ -161,7 +169,9 @@ export default function Home() {
           <div className="absolute bottom-0 left-[-10%] w-[120%] h-[60px] bg-white rounded-t-[100%] z-20"></div>
         </section>
 
-        {/* РАСПИСАНИЕ */}
+        {/* ========================================== */}
+        {/* СЕКЦИЯ 2: РАСПИСАНИЕ                       */}
+        {/* ========================================== */}
         <section className="bg-white text-black relative pt-8 pb-10 px-5 flex flex-col items-center z-10 font-sans -mt-1 overflow-hidden">
           <div className="absolute top-[160px] right-[-10px] w-[110px] h-[110px] opacity-90 z-0 pointer-events-none rotate-[-15deg]">
              <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
@@ -190,7 +200,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ИРИНА */}
+        {/* ========================================== */}
+        {/* СЕКЦИЯ 3: ИРИНА ЛЕВШУНОВА                  */}
+        {/* ========================================== */}
         <section className="bg-[#6c2a93] relative pt-10 pb-16 px-5 flex flex-col items-center z-20 overflow-hidden font-sans">
           <div className="absolute top-[400px] left-[-30px] w-[140px] h-[140px] opacity-90 z-10 pointer-events-none rotate-[-15deg]">
              <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
@@ -223,10 +235,15 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ДЛЯ КОГО */}
+        {/* ========================================== */}
+        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС                */}
+        {/* ========================================== */}
         <section className="bg-white text-black relative pt-16 pb-2 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 pointer-events-none rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
+          </div>
+          <div className="absolute bottom-10 right-10 w-16 h-16 opacity-30 pointer-events-none rotate-[-15deg]">
+            <Image src="/images/wb-icon.png" alt="WB icon" width={64} height={64} className="object-contain" />
           </div>
           <div className="absolute top-[-1px] left-0 w-full h-[100px] pointer-events-none">
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full rotate-180"><path d="M0,100 C30,100 40,20 100,50 L100,100 Z" fill="#6c2a93" /></svg>
@@ -249,7 +266,9 @@ export default function Home() {
           </ul>
         </section>
 
-        {/* СЛАЙДЕР */}
+        {/* ========================================== */}
+        {/* СЕКЦИЯ 5: ОТЗЫВЫ (СЛАЙДЕР)                 */}
+        {/* ========================================== */}
         <section className="bg-white relative pb-5 px-5 flex flex-col items-center z-10 overflow-hidden font-sans">
           <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight w-full relative z-10 text-black`}>
             Нам доверяют:<br/>наши отзывы
@@ -258,10 +277,15 @@ export default function Home() {
             <div className="relative w-[350px] h-[600px] transition-all duration-500">
                <Image src={reviewImages[currentReview]} alt={`Review ${currentReview + 1}`} fill className="object-contain" priority />
             </div>
+            <div className="absolute bottom-[-20px] right-[-10px] w-24 h-24 pointer-events-none rotate-[12deg] z-20">
+              <Image src="/images/wb-icon.png" alt="WB icon" fill className="object-contain" />
+            </div>
           </div>
         </section>
 
-        {/* УПРАВЛЕНИЕ СЛАЙДЕРОМ */}
+        {/* ========================================== */}
+        {/* СЕКЦИЯ 6: КНОПКИ УПРАВЛЕНИЯ СЛАЙДЕРОМ      */}
+        {/* ========================================== */}
         <section className="bg-white relative pt-4 pb-30 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="flex justify-center gap-6 mb-12 relative z-10">
             <button onClick={prevReview} disabled={currentReview === 0} className={`${btnAnimation} w-[75px] h-[75px] relative ${currentReview === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}>
@@ -277,14 +301,17 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ФОРМА */}
+        {/* ========================================== */}
+        {/* СЕКЦИЯ 7: ФИНАЛЬНАЯ ФОРМА                  */}
+        {/* ========================================== */}
         <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute top-[20%] left-[-20px] w-24 h-24 rotate-[-15deg] opacity-80 z-0">
             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" />
           </div>
           <div className="text-center mb-10 relative z-10">
             <h2 className={`${cocomatClass} text-[24px] font-black text-white uppercase leading-tight mb-2`}>БЕСПЛАТНЫЙ<br/>ПРАКТИЧЕСКИЙ КУРС</h2>
-            <p className={`${cocomatClass} text-[14px] font-bold text-white mt-4`}>{eventDate.day} {eventDate.month} В 19:00</p>
+            <p className={`${cocomatClass} text-[14px] font-bold text-white opacity-90 uppercase leading-snug`}>ЕДИНСТВЕННЫЙ КУРС С ПРАКТИКОЙ В<br/>РЕАЛЬНОМ КАБИНЕТЕ ПОСТАВЩИКА</p>
+            <p className={`${cocomatClass} text-[18px] font-bold text-white mt-4`}>{eventDate.day} {eventDate.month} В 19:00</p>
           </div>
           <div className="w-full bg-white/10 backdrop-blur-md rounded-[24px] p-6 mb-8 flex justify-between items-center border border-white/20 relative z-10">
             <div className="flex flex-col">
@@ -297,21 +324,45 @@ export default function Home() {
                 <span className="mx-1">:</span>
                 <span>{displaySecs}</span>
               </div>
+              <div className="flex justify-between text-[10px] text-white/60 uppercase">
+                <span>минут</span>
+                <span className="ml-2">секунд</span>
+              </div>
             </div>
           </div>
           <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4 relative z-10">
-            <input type="text" placeholder="Ваше Имя" value={name} onChange={handleNameChange} className="w-full h-14 bg-white rounded-full px-8 text-black font-sans text-lg focus:outline-none" />
+            {/* ПОЛЕ ИМЕНИ: БЕЗ ЦИФР */}
+            <input 
+              type="text" 
+              placeholder="Ваше Имя" 
+              value={name} 
+              onChange={handleNameChange} 
+              className="w-full h-14 bg-white rounded-full px-8 text-black font-sans text-lg focus:outline-none placeholder:text-gray-400" 
+            />
             <input type="tel" value={phone} onChange={handlePhoneChange} className="w-full h-14 bg-white rounded-full px-8 text-black font-sans text-lg focus:outline-none" />
             <button type="submit" className={`${cocomatClass} w-full bg-[#e62010] text-white font-black text-[22px] py-4 rounded-full mt-2 shadow-xl ${btnAnimation}`}>ПРИНЯТЬ УЧАСТИЕ</button>
           </form>
+          <div className="mt-12 text-center relative z-10">
+            <h3 className={`${cocomatClass} text-[20px] font-black text-white uppercase leading-tight mb-2`}>КАК СТАТЬ<br/>МЕНЕДЖЕРОМ WILDBERRIES</h3>
+            <p className={`${cocomatClass} text-[18px] font-black text-white uppercase`}>И ВЫЙТИ НА ДОХОД ОТ 50<br/>ТЫСЯЧ РУБЛЕЙ В МЕСЯЦ</p>
+            <p className={`${cocomatClass} text-[10px] text-white opacity-60 mt-6 leading-tight`}>*УСПЕЙ ЗАРЕГИСТРИРОВАТЬСЯ И ЗАБИРАЙ<br/>ПОШАГОВЫЙ ПЛАН ОСВОЕНИЯ ПРОФЕССИИ</p>
+          </div>
+          <div className="mt-16 opacity-40 text-[12px] text-[#fc60b1]">Email: schoolmarketplace.online@yandex.ru</div>
           <div className="absolute bottom-[10%] right-[-10px] w-20 h-20 rotate-[15deg] opacity-50 z-0"><Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" /></div>
         </section>
 
-        {/* ПОДВАЛ */}
+        {/* ========================================== */}
+        {/* СЕКЦИЯ 8: ЮРИДИЧЕСКАЯ ИНФОРМАЦИЯ           */}
+        {/* ========================================== */}
         <footer className="bg-white py-12 px-6 flex flex-col items-center justify-center text-center">
           <div className="font-sans text-[#fc60b1] text-[12px] leading-relaxed font-medium uppercase space-y-5">
             <p>ИП Левшунова Ирина Борисовна ИНН<br/>615429347160</p>
-            <Link href="/privacy" className="underline underline-offset-2">Договор оферты</Link>
+            <p>Лицензия на осуществление<br/>образовательной деятельности №<br/>Л035-01218-23/01222051 от<br/>29.05.2024</p>
+            <Link href="/privacy" className="underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity">
+              Договор в отношении политики<br/>
+              обработки персональных данных и<br/>
+              Договор оферты
+            </Link>
           </div>
         </footer>
 
