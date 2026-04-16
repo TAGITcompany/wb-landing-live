@@ -49,19 +49,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  try {
-    const savedLink = await redis.get('current_chat_link');
-    const finalLink = savedLink || "https://vk.me/schoolmarketplace";
-    
-    return new Response(JSON.stringify({ link: finalLink }), {
-      headers: { 
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: "DB Error" }), { status: 500 });
-  }
+  return new Response('Bot API is active', { status: 200 });
 }
 
 async function sendVkMessage(peer_id: number, message: string) {
