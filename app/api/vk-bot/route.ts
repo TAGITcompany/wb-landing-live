@@ -54,7 +54,6 @@ export async function GET() {
 
 async function sendVkMessage(peer_id: number, message: string) {
   if (!VK_TOKEN) return;
-
   const params = new URLSearchParams({
     access_token: VK_TOKEN,
     peer_id: peer_id.toString(),
@@ -62,9 +61,5 @@ async function sendVkMessage(peer_id: number, message: string) {
     random_id: Math.floor(Math.random() * 2147483647).toString(),
     v: '5.131'
   });
-
-  await fetch(`https://api.vk.com/method/messages.send`, {
-    method: 'POST',
-    body: params
-  });
+  await fetch(`https://api.vk.com/method/messages.send`, { method: 'POST', body: params });
 }
