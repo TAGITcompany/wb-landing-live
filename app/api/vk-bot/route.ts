@@ -28,17 +28,23 @@ export async function POST(req: Request) {
         if (savedLink) finalLink = savedLink;
       } catch (e) {}
 
+      // Команда /link для админа
       if (from_id === ADMIN_ID && text.toLowerCase().startsWith('/link')) {
         const newLink = text.split(' ')[1];
         if (newLink?.startsWith('http')) {
           await redis.set('current_chat_link', newLink);
-          await sendVkMessage(from_id, "✅ Ссылка обновлена!");
+          const res = await sendVkMessage(from_id, "✅ Ссылка обновлена!");
+          await redis.set('last_vk_error', JSON.stringify(res));
           return new Response('ok');
         }
       }
 
       const welcomeMsg = `Здравствуйте! 👋\n\nВот актуальная ссылка на чат с Ириной:\n${finalLink}`;
-      await sendVkMessage(from_id, welcomeMsg);
+      
+      // Отправляем сообщение и сохраняем ответ ВК в базу для отладки
+      const vkResponse = await sendVkMessage(from_id, welcomeMsg);
+      await redis.set('last_vk_error', JSON.stringify(vkResponse));
+
       return new Response('ok');
     }
 
@@ -48,8 +54,18 @@ export async function POST(req: Request) {
   }
 }
 
+// ЭТА СТРАНИЦА ТЕПЕРЬ ПОКАЖЕТ ОШИБКУ
+export async function GET() {
+  const lastError = await redis.get('last_vk_error');
+  return new Response(
+    `СТАТУС БОТА: РАБОТАЕТ\n\nПОСЛЕДНИЙ ОТВЕТ ОТ ВК:\n${lastError || 'Запросов еще не было'}\n\nADMIN_ID в системе: ${ADMIN_ID}`,
+    { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+  );
+}
+
 async function sendVkMessage(peer_id: number, message: string) {
-  if (!VK_TOKEN) return;
+  if (!VK_TOKEN) return { error: "VK_TOKEN is missing in Vercel" };
+
   const params = new URLSearchParams({
     access_token: VK_TOKEN,
     peer_id: peer_id.toString(),
@@ -57,8 +73,11 @@ async function sendVkMessage(peer_id: number, message: string) {
     random_id: Math.floor(Math.random() * 2147483647).toString(),
     v: '5.131'
   });
-  await fetch(`https://api.vk.com/method/messages.send`, {
+
+  const response = await fetch(`https://api.vk.com/method/messages.send`, {
     method: 'POST',
     body: params
   });
+  
+  return await response.json();
 }
