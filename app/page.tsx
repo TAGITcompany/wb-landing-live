@@ -12,8 +12,8 @@ export default function Home() {
   const [phone, setPhone] = useState("+7");
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
   
-  // АКТУАЛЬНАЯ ССЫЛКА НА ТВОЁ СООБЩЕСТВО
-  const [chatLink, setChatLink] = useState("https://vk.me/obuchunie_mp");
+  // ЗАРАНЕЕ ГРЕЕМ ССЫЛКУ (Fallback на твой ID сообщества)
+  const [chatLink, setChatLink] = useState("https://vk.com/im?sel=-211046470");
 
   const reviewImages = [
     '/images/reviews_phone.png',
@@ -25,28 +25,28 @@ export default function Home() {
   const [currentReview, setCurrentReview] = useState(0);
 
   const nextReview = () => {
-    if (currentReview < reviewImages.length - 1) {
-      setCurrentReview((prev) => prev + 1);
-    }
+    if (currentReview < reviewImages.length - 1) setCurrentReview((prev) => prev + 1);
   };
 
   const prevReview = () => {
-    if (currentReview > 0) {
-      setCurrentReview((prev) => prev - 1);
-    }
+    if (currentReview > 0) setCurrentReview((prev) => prev - 1);
   };
 
   useEffect(() => {
     setMounted(true);
     bridge.send('VKWebAppInit');
     
-    // Пытаемся получить ссылку из API, если бот её обновил
+    // СРАЗУ ПРИ ЗАГРУЗКЕ УЗНАЕМ ССЫЛКУ У БОТА
+    // Чтобы к моменту клика она уже была в памяти
     fetch('/api/vk-bot')
       .then(res => res.json())
       .then(data => {
-        if (data.link) setChatLink(data.link);
+        if (data.link) {
+          console.log("Ссылка от бота получена заранее:", data.link);
+          setChatLink(data.link);
+        }
       })
-      .catch(err => console.error("Ошибка загрузки ссылки:", err));
+      .catch(err => console.error("Ошибка предзагрузки ссылки:", err));
 
     const updateEventDate = () => {
       let d = new Date(2026, 3, 14, 19, 0);
@@ -72,31 +72,27 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // ФУНКЦИЯ ОТКРЫТИЯ ЧАТА
+  // МГНОВЕННАЯ ФУНКЦИЯ (Без await и fetch внутри)
   const handleOpenChat = () => {
-    if (!chatLink) return;
-    // @ts-ignore - убираем красную линию для Vercel
-    bridge.send("VKWebAppOpenURL", { "url": chatLink })
+    const urlToOpen = chatLink;
+    
+    // Отправляем в ВК мгновенно
+    // @ts-ignore
+    bridge.send("VKWebAppOpenURL", { "url": urlToOpen })
       .catch(() => {
-        window.open(chatLink, '_blank');
+        // Если это комп или мост не сработал
+        window.open(urlToOpen, '_blank');
       });
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    const filteredVal = val.replace(/[0-9]/g, '');
-    setName(filteredVal);
+    setName(e.target.value.replace(/[0-9]/g, ''));
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
-    if (!input.startsWith("+7")) {
-      setPhone("+7");
-      return;
-    }
-    const digitsAfterPrefix = input.slice(2).replace(/\D/g, '');
-    const limitedDigits = digitsAfterPrefix.slice(0, 10);
-    setPhone("+7" + limitedDigits);
+    if (!input.startsWith("+7")) { setPhone("+7"); return; }
+    setPhone("+7" + input.slice(2).replace(/\D/g, '').slice(0, 10));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -255,9 +251,6 @@ export default function Home() {
         <section className="bg-white text-black relative pt-16 pb-2 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 pointer-events-none rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
-          </div>
-          <div className="absolute bottom-10 right-10 w-16 h-16 opacity-30 pointer-events-none rotate-[-15deg]">
-            <Image src="/images/wb-icon.png" alt="WB icon" width={64} height={64} className="object-contain" />
           </div>
           <div className="absolute top-[-1px] left-0 w-full h-[100px] pointer-events-none">
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full rotate-180"><path d="M0,100 C30,100 40,20 100,50 L100,100 Z" fill="#6c2a93" /></svg>
