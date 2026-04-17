@@ -11,11 +11,12 @@ export default function Home() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+7");
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Актуальная ссылка (твоё сообщество)
-  const chatLink = "https://vk.com/im?sel=-211046470";
+  // Актуальная ссылка, которую будет открывать кнопка
+  const [chatLink, setChatLink] = useState("https://vk.me/obuchunie_mp");
 
-  // Ссылка на Google Apps Script
+  // Твоя ссылка на Google Apps Script
   const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxqkaUgccWwEdydj7EXaeBpQTtBE3ZBa65ziteeqTxlROA19LFEbVUEs4gYeChXANpd/exec";
 
   const reviewImages = [
@@ -39,6 +40,17 @@ export default function Home() {
     setMounted(true);
     bridge.send('VKWebAppInit');
     
+    // ПРЕДЗАГРУЗКА: Получаем ссылку, которую Ирина задала в боте
+    fetch('/api/vk-bot')
+      .then(res => res.json())
+      .then(data => {
+        if (data.link) {
+          console.log("Ссылка из бота подтянута:", data.link);
+          setChatLink(data.link);
+        }
+      })
+      .catch(err => console.error("Ошибка загрузки ссылки из API:", err));
+
     const updateEventDate = () => {
       let d = new Date(2026, 3, 14, 19, 0);
       const now = new Date();
@@ -63,15 +75,20 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // ФУНКЦИЯ 1: Чистый переход для первых двух кнопок
+  // Универсальная функция перехода (для кнопок 1 и 2)
   const handleLinkClick = (e: React.MouseEvent) => {
+    // Не даем браузеру просто перейти по href, сначала пробуем мост ВК
+    e.preventDefault();
     // @ts-ignore
-    bridge.send("VKWebAppOpenURL", { "url": chatLink });
+    bridge.send("VKWebAppOpenURL", { "url": chatLink })
+      .catch(() => {
+        window.open(chatLink, '_blank');
+      });
   };
 
-  // ФУНКЦИЯ 2: Переход + Отправка данных для третьей кнопки
+  // Функция для третьей кнопки (Таблица + Переход)
   const handleFormClick = (e: React.MouseEvent) => {
-    // 1. Сначала отправляем данные в Google фоном (не ждем через await)
+    // Шлем данные в Google (в фоне)
     fetch(GOOGLE_SHEET_URL, {
       method: 'POST',
       mode: 'no-cors',
@@ -79,9 +96,12 @@ export default function Home() {
       body: JSON.stringify({ name, phone })
     });
 
-    // 2. И тут же вызываем тот же мост ВК, что и на других кнопках
+    // Тут же вызываем мост ВК без задержек
     // @ts-ignore
-    bridge.send("VKWebAppOpenURL", { "url": chatLink });
+    bridge.send("VKWebAppOpenURL", { "url": chatLink })
+      .catch(() => {
+        window.open(chatLink, '_blank');
+      });
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,7 +111,8 @@ export default function Home() {
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
     if (!input.startsWith("+7")) { setPhone("+7"); return; }
-    setPhone("+7" + input.slice(2).replace(/\D/g, '').slice(0, 10));
+    const digitsAfterPrefix = input.slice(2).replace(/\D/g, '').slice(0, 10);
+    setPhone("+7" + digitsAfterPrefix);
   };
 
   if (!mounted) return <div className="min-h-screen bg-[#2a0e3d]" />;
@@ -105,10 +126,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#2a0e3d] flex justify-center items-start text-white antialiased font-sans">
-      <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen">
+      <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen text-black">
 
         {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН */}
-        <section className="bg-[#5a2082] relative pb-20">
+        <section className="bg-[#5a2082] relative pb-20 text-white">
           <div className="px-5 pt-8 relative z-10">
             <div className="absolute top-[-10px] left-[5px] w-28 h-32 rotate-[-15deg] z-0 opacity-80">
               <Image src="/images/books.png" alt="books" width={112} height={128} className="object-contain" />
@@ -161,10 +182,9 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20">
+            <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20 text-white">
                <a 
                 href={chatLink} 
-                target="_blank" 
                 onClick={handleLinkClick}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
                >
@@ -191,15 +211,15 @@ export default function Home() {
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full"><path d="M0,100 C30,100 40,20 100,50 L100,100 Z" fill="#6c2a93" /></svg>
           </div>
           <h2 className={`${cocomatClass} text-[27px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight relative z-20`}>Что будет на 3-х<br/>дневном бесплатном<br/>курсе:</h2>
-          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20 px-2">
+          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20">
             <div className={`bg-[#ea3f9d] text-black ${cocomatClass} font-extrabold text-[18px] py-1.5 px-10 rounded-full mb-4 uppercase`}>1 День</div>
             <p className="text-[20px] leading-snug"><span className="font-bold">Кто такой менеджер Wildberries.</span><br/>План развития менеджера<br/>Зарплата менеджера Wildberries</p>
           </div>
-          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20 px-2">
+          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20">
             <div className={`bg-[#ea3f9d] text-black ${cocomatClass} font-extrabold text-[18px] py-1.5 px-10 rounded-full mb-4 uppercase`}>2 День</div>
             <p className="text-[20px] leading-snug"><span className="font-bold">Практический урок:</span> «Делаем<br/>карточку товара на<br/>WILDBERRIES» в реальном<br/>кабинете поставщика</p>
           </div>
-          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20 px-2">
+          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20">
             <div className={`bg-[#ea3f9d] text-black ${cocomatClass} font-extrabold text-[18px] py-1.5 px-10 rounded-full mb-4 uppercase`}>3 День</div>
             <p className="text-[20px] leading-snug"><span className="font-bold">Проверка домашнего задания</span><br/>Какие шаги нужно сделать,<br/>чтобы пройти стажировку с<br/>последующим трудоустройством.<br/>Как выйти на 50тыс. руб.</p>
           </div>
@@ -215,9 +235,9 @@ export default function Home() {
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>8 брендов клиентов на сопровождении</li>
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Общий оборот брендов — 6.5 млн. рублей в месяц</li>
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Личный доход: 600+ тысяч рублей в месяц</li>
-            <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Обучила более 1000 человек профессии</li>
+            <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Обучила более 1000 человек профессии «Менеджер Wildberries»</li>
           </ul>
-          <div className="relative w-full h-[500px] z-20 flex justify-center">
+          <div className="relative w-full h-[500px] z-20 pointer-events-none flex justify-center overflow-visible">
             <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[350px] h-[350px] bg-[#df00ff]/80 blur-[90px] rounded-full z-0"></div>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[860px] h-[1000px] z-10">
                <Image src="/images/irina.png" alt="Irina" fill className="object-contain object-bottom" priority />
@@ -226,7 +246,6 @@ export default function Home() {
           <div className="w-full p-1 rounded-full border-2 border-[#f04a94] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-6 relative z-30 mt-[-145px]">
              <a 
               href={chatLink} 
-              target="_blank" 
               onClick={handleLinkClick}
               className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
              >
@@ -250,6 +269,9 @@ export default function Home() {
           <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 pointer-events-none rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
           </div>
+          <div className="absolute bottom-10 right-10 w-16 h-16 opacity-30 pointer-events-none rotate-[-15deg]">
+            <Image src="/images/wb-icon.png" alt="WB icon" width={64} height={64} className="object-contain" />
+          </div>
           <div className="absolute top-[-1px] left-0 w-full h-[100px] pointer-events-none">
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full rotate-180"><path d="M0,100 C30,100 40,20 100,50 L100,100 Z" fill="#6c2a93" /></svg>
           </div>
@@ -271,7 +293,7 @@ export default function Home() {
           </ul>
         </section>
 
-        {/* СЕКЦИЯ 5: ОТЗЫВЫ (СЛАЙДЕР) */}
+        {/* СЕКЦИЯ 5: ОТЗЫВЫ */}
         <section className="bg-white relative pb-5 px-5 flex flex-col items-center z-10 overflow-hidden font-sans">
           <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight w-full relative z-10 text-black`}>
             Нам доверяют:<br/>наши отзывы
@@ -302,7 +324,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 7: ФОРМА (ПРАВКА ТУТ) */}
+        {/* СЕКЦИЯ 7: ФОРМА */}
         <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans text-white">
           <div className="absolute top-[20%] left-[-20px] w-24 h-24 rotate-[-15deg] opacity-80 z-0">
             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" />
@@ -347,7 +369,7 @@ export default function Home() {
               required
             />
             
-            {/* ТРЕТЬЯ КНОПКА: Сделана как <a> для мгновенного перехода + onClick шлет в гугл */}
+            {/* ТРЕТЬЯ КНОПКА: Переход + Фоновая отправка в гугл */}
             <a 
               href={chatLink} 
               target="_blank" 
@@ -367,8 +389,8 @@ export default function Home() {
         </section>
 
         {/* СЕКЦИЯ 8: ПОДВАЛ */}
-        <footer className="bg-white py-12 px-6 flex flex-col items-center justify-center text-center">
-          <div className="font-sans text-[#fc60b1] text-[12px] leading-relaxed font-medium uppercase space-y-5">
+        <footer className="bg-white py-12 px-6 flex flex-col items-center justify-center text-center text-[#fc60b1]">
+          <div className="font-sans text-[12px] leading-relaxed font-medium uppercase space-y-5">
             <p>ИП Левшунова Ирина Борисовна ИНН<br/>615429347160</p>
             <p>Лицензия на осуществление<br/>образовательной деятельности №<br/>Л035-01218-23/01222051 от<br/>29.05.2024</p>
             <Link href="/privacy" className="underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity">
