@@ -16,7 +16,7 @@ export default function Home() {
   // Актуальная ссылка
   const [chatLink, setChatLink] = useState("https://vk.me/obuchunie_mp");
 
-  // Твоя ссылка на Google Apps Script
+  // Ссылка на Google Apps Script
   const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxqkaUgccWwEdydj7EXaeBpQTtBE3ZBa65ziteeqTxlROA19LFEbVUEs4gYeChXANpd/exec";
 
   const reviewImages = [
@@ -40,7 +40,7 @@ export default function Home() {
     setMounted(true);
     bridge.send('VKWebAppInit');
     
-    // Предзагрузка ссылки от бота
+    // Предзагрузка динамической ссылки
     fetch('/api/vk-bot')
       .then(res => res.json())
       .then(data => {
@@ -52,7 +52,7 @@ export default function Home() {
       let d = new Date(2026, 3, 14, 19, 0);
       const now = new Date();
       while (now >= d) {
-        d.setDate(d.getDate() + 6); // Твоя логика +6 дней
+        d.setDate(d.getDate() + 6); // Твоя логика +6
       }
       const months = [
         'ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ', 'МАЯ', 'ИЮНЯ',
@@ -72,9 +72,8 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // ФУНКЦИЯ ПЕРЕХОДА (Для первых двух кнопок)
+  // ТА САМАЯ ИДЕАЛЬНАЯ ФУНКЦИЯ ПЕРЕХОДА (из третьей кнопки)
   const handleTransitionOnly = (e: React.MouseEvent) => {
-    e.preventDefault();
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
@@ -82,28 +81,9 @@ export default function Home() {
       });
   };
 
-  // ФУНКЦИЯ ДЛЯ ТРЕТЬЕЙ КНОПКИ (Валидация + Гугл + Переход)
+  // ФУНКЦИЯ ДЛЯ ТРЕТЬЕЙ КНОПКИ (Гугл + Переход)
   const handleFormClick = (e: React.MouseEvent) => {
-    // --- ПРОВЕРКА ИМЕНИ (ЛОГИКА ОТ ДРУГА) ---
-    const matRegex = /(х[уy](й|и|я|е|ё)|пизд|еб[аоуеы]|бля|шлюх|хуел|залуп|дроч|гондон|пидр|пизда|еблан)/i;
-    const gibberishRegex = /[бвгджзклмнпрстфхцчшщ]{4,}/i; 
-    const cyrillicRegex = /^[А-Яа-яЁё\s\-]+$/;
-
-    if (!name || name.trim().length < 2) {
-      alert("❌ Введи нормальное имя (минимум 2 буквы)!");
-      return;
-    }
-    if (!cyrillicRegex.test(name)) {
-      alert("❌ Имя должно содержать только русские буквы!");
-      return;
-    }
-    if (matRegex.test(name) || gibberishRegex.test(name)) {
-      alert("❌ Давай без матов и непонятного набора букв в имени!");
-      return;
-    }
-    // --- КОНЕЦ ПРОВЕРКИ ---
-
-    // Если всё ок — отправляем в Гугл (фоном)
+    // Шлем данные в Google (в фоне)
     fetch(GOOGLE_SHEET_URL, {
       method: 'POST',
       mode: 'no-cors',
@@ -111,7 +91,7 @@ export default function Home() {
       body: JSON.stringify({ name, phone })
     });
 
-    // И сразу в чат
+    // Тут же вызываем идеальный переход
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
@@ -141,10 +121,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#2a0e3d] flex justify-center items-start text-white antialiased font-sans">
-      <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen text-black">
+      <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen">
 
         {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН */}
-        <section className="bg-[#5a2082] relative pb-20 text-white">
+        <section className="bg-[#5a2082] relative pb-20">
           <div className="px-5 pt-8 relative z-10">
             <div className="absolute top-[-10px] left-[5px] w-28 h-32 rotate-[-15deg] z-0 opacity-80">
               <Image src="/images/books.png" alt="books" width={112} height={128} className="object-contain" />
@@ -197,9 +177,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20 text-white">
+            <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20">
                <a 
                 href={chatLink} 
+                target="_blank" 
                 onClick={handleTransitionOnly}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
                >
@@ -281,7 +262,7 @@ export default function Home() {
 
         {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС */}
         <section className="bg-white text-black relative pt-16 pb-2 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
-          <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 rotate-[10deg]">
+          <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 pointer-events-none rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
           </div>
           <div className="absolute bottom-10 right-10 w-16 h-16 opacity-30 pointer-events-none rotate-[-15deg]">
@@ -339,7 +320,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 7: ФОРМА (С ВАЛИДАЦИЕЙ ОТ МАТОВ) */}
+        {/* СЕКЦИЯ 7: ФОРМА */}
         <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans text-white">
           <div className="absolute top-[20%] left-[-20px] w-24 h-24 rotate-[-15deg] opacity-80 z-0">
             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" />
@@ -384,6 +365,7 @@ export default function Home() {
               required
             />
             
+            {/* ТРЕТЬЯ КНОПКА: ТЕПЕРЬ ПЕРЕХОДИТ ТАК ЖЕ, КАК И ПЕРВЫЕ ДВЕ + ШЛЕТ В ГУГЛ */}
             <a 
               href={chatLink} 
               target="_blank" 
