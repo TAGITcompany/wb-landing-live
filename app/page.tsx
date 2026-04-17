@@ -11,9 +11,8 @@ export default function Home() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+7");
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Актуальная ссылка на чат (твоё сообщество)
+  // Актуальная ссылка (твоё сообщество)
   const chatLink = "https://vk.com/im?sel=-211046470";
 
   // Ссылка на Google Apps Script
@@ -44,7 +43,7 @@ export default function Home() {
       let d = new Date(2026, 3, 14, 19, 0);
       const now = new Date();
       while (now >= d) {
-        d.setDate(d.getDate() + 6); // Твоя правка +6 дней
+        d.setDate(d.getDate() + 6); // Твоя логика +6 дней
       }
       const months = [
         'ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ', 'МАЯ', 'ИЮНЯ',
@@ -64,29 +63,15 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // Универсальная функция открытия чата (для всех кнопок)
-  const openChat = () => {
+  // ФУНКЦИЯ 1: Чистый переход для первых двух кнопок
+  const handleLinkClick = (e: React.MouseEvent) => {
     // @ts-ignore
-    bridge.send("VKWebAppOpenURL", { "url": chatLink })
-      .catch(() => {
-        window.open(chatLink, '_blank');
-      });
+    bridge.send("VKWebAppOpenURL", { "url": chatLink });
   };
 
-  // Обработка клика для первых двух кнопок (возвращаем как было)
-  const handleSimpleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    openChat();
-  };
-
-  // Логика специально для 3-й кнопки (ФОРМА + ЧАТ)
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
-
-    // 1. Запускаем отправку данных в таблицу ФОНОМ (не ждем через await!)
+  // ФУНКЦИЯ 2: Переход + Отправка данных для третьей кнопки
+  const handleFormClick = (e: React.MouseEvent) => {
+    // 1. Сначала отправляем данные в Google фоном (не ждем через await)
     fetch(GOOGLE_SHEET_URL, {
       method: 'POST',
       mode: 'no-cors',
@@ -94,14 +79,9 @@ export default function Home() {
       body: JSON.stringify({ name, phone })
     });
 
-    // 2. МГНОВЕННО вызываем открытие чата. 
-    // Поскольку мы не ждем завершения fetch, это сработает как мгновенный клик.
-    openChat();
-
-    // Сбрасываем состояние через пару секунд
-    setTimeout(() => {
-      setIsSubmitting(false);
-    }, 2000);
+    // 2. И тут же вызываем тот же мост ВК, что и на других кнопках
+    // @ts-ignore
+    bridge.send("VKWebAppOpenURL", { "url": chatLink });
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,7 +164,8 @@ export default function Home() {
             <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20">
                <a 
                 href={chatLink} 
-                onClick={handleSimpleClick}
+                target="_blank" 
+                onClick={handleLinkClick}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
                >
                  <span className="transform md:-translate-y-[8px] -translate-y-[5px]">Принять участие</span>
@@ -230,7 +211,7 @@ export default function Home() {
              <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
           </div>
           <h2 className={`${cocomatClass} text-[26px] font-extrabold text-center uppercase leading-[1.3] mb-8 tracking-wide relative z-20`}>Поставщик<br/>Wildberries<br/>Ирина Левшунова</h2>
-          <ul className="text-[17px] leading-[1.4] mb-8 space-y-4 font-normal text-center max-w-[320px] relative z-20">
+          <ul className="text-white text-[17px] leading-[1.4] mb-8 space-y-4 font-normal text-center max-w-[320px] relative z-20">
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>8 брендов клиентов на сопровождении</li>
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Общий оборот брендов — 6.5 млн. рублей в месяц</li>
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Личный доход: 600+ тысяч рублей в месяц</li>
@@ -245,18 +226,19 @@ export default function Home() {
           <div className="w-full p-1 rounded-full border-2 border-[#f04a94] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-6 relative z-30 mt-[-145px]">
              <a 
               href={chatLink} 
-              onClick={handleSimpleClick}
+              target="_blank" 
+              onClick={handleLinkClick}
               className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
              >
                <span className="transform -translate-y-[4px]">Принять участие</span>
              </a>
           </div>
           <div className="flex justify-center gap-6 relative z-30">
-            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-[#df00ff] flex flex-col items-center justify-center leading-none bg-[#6c2a93]/50 backdrop-blur-sm relative">
+            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-[#df00ff] flex flex-col items-center justify-center text-white leading-none bg-[#6c2a93]/50 backdrop-blur-sm relative">
               <span className="text-[22px] font-bold tabular-nums mb-1">{displayMins}</span>
               <span className="text-[10px] opacity-90">минут</span>
             </div>
-            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-white flex flex-col items-center justify-center leading-none bg-[#6c2a93]/50 backdrop-blur-sm relative">
+            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-white flex flex-col items-center justify-center text-white leading-none bg-[#6c2a93]/50 backdrop-blur-sm relative">
               <span className="text-[22px] font-bold tabular-nums mb-1">{displaySecs}</span>
               <span className="text-[10px] opacity-90">секунд</span>
             </div>
@@ -289,9 +271,11 @@ export default function Home() {
           </ul>
         </section>
 
-        {/* СЕКЦИЯ 5: ОТЗЫВЫ */}
+        {/* СЕКЦИЯ 5: ОТЗЫВЫ (СЛАЙДЕР) */}
         <section className="bg-white relative pb-5 px-5 flex flex-col items-center z-10 overflow-hidden font-sans">
-          <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight w-full relative z-10 text-black`}>Нам доверяют:<br/>наши отзывы</h2>
+          <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight w-full relative z-10 text-black`}>
+            Нам доверяют:<br/>наши отзывы
+          </h2>
           <div className="relative w-full flex justify-center items-center z-10">
             <div className="relative w-[350px] h-[600px] transition-all duration-500">
                <Image src={reviewImages[currentReview]} alt={`Review ${currentReview + 1}`} fill className="object-contain" priority />
@@ -318,7 +302,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 7: ФОРМА (ДАННЫЕ В ТАБЛИЦУ + ПЕРЕХОД) */}
+        {/* СЕКЦИЯ 7: ФОРМА (ПРАВКА ТУТ) */}
         <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans text-white">
           <div className="absolute top-[20%] left-[-20px] w-24 h-24 rotate-[-15deg] opacity-80 z-0">
             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" />
@@ -346,7 +330,7 @@ export default function Home() {
             </div>
           </div>
           
-          <form onSubmit={handleFormSubmit} className="w-full flex flex-col gap-4 relative z-10">
+          <div className="w-full flex flex-col gap-4 relative z-10">
             <input 
               type="text" 
               placeholder="Ваше Имя" 
@@ -363,14 +347,16 @@ export default function Home() {
               required
             />
             
-            <button 
-              type="submit" 
-              disabled={isSubmitting}
-              className={`${cocomatClass} w-full bg-[#e62010] text-white font-black text-[22px] py-4 rounded-full mt-2 shadow-xl flex items-center justify-center ${btnAnimation} ${isSubmitting ? 'opacity-50' : ''}`}
+            {/* ТРЕТЬЯ КНОПКА: Сделана как <a> для мгновенного перехода + onClick шлет в гугл */}
+            <a 
+              href={chatLink} 
+              target="_blank" 
+              onClick={handleFormClick}
+              className={`${cocomatClass} w-full bg-[#e62010] text-white font-black text-[22px] py-4 rounded-full mt-2 shadow-xl flex items-center justify-center ${btnAnimation}`}
             >
-              {isSubmitting ? "ОТПРАВКА..." : "ПРИНЯТЬ УЧАСТИЕ"}
-            </button>
-          </form>
+              ПРИНЯТЬ УЧАСТИЕ
+            </a>
+          </div>
 
           <div className="mt-12 text-center relative z-10">
             <h3 className={`${cocomatClass} text-[20px] font-black text-white uppercase leading-tight mb-2`}>КАК СТАТЬ<br/>МЕНЕДЖЕРОМ WILDBERRIES</h3>
