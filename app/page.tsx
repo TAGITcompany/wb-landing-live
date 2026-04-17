@@ -48,7 +48,7 @@ export default function Home() {
       let d = new Date(2026, 3, 14, 19, 0);
       const now = new Date();
       while (now >= d) {
-        d.setDate(d.getDate() + 7);
+        d.setDate(d.getDate() + 6);
       }
       const months = [
         'ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ', 'МАЯ', 'ИЮНЯ',
