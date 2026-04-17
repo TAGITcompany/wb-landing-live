@@ -48,25 +48,8 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
-  try {
-    const savedLink = await redis.get('current_chat_link');
-    const finalLink = savedLink || "https://vk.me/schoolmarketplace";
-    
-    return new Response(JSON.stringify({ link: finalLink }), {
-      headers: { 
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: "DB Error" }), { status: 500 });
-  }
-}
-
 async function sendVkMessage(peer_id: number, message: string) {
   if (!VK_TOKEN) return;
-
   const params = new URLSearchParams({
     access_token: VK_TOKEN,
     peer_id: peer_id.toString(),
@@ -74,7 +57,6 @@ async function sendVkMessage(peer_id: number, message: string) {
     random_id: Math.floor(Math.random() * 2147483647).toString(),
     v: '5.131'
   });
-
   await fetch(`https://api.vk.com/method/messages.send`, {
     method: 'POST',
     body: params
