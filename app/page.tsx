@@ -12,7 +12,7 @@ export default function Home() {
   const [phone, setPhone] = useState("+7");
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
   
-  // Состояние для ссылки (берем из бота)
+  // Базовая ссылка (если бот не ответит)
   const [chatLink, setChatLink] = useState("https://vk.me/schoolmarketplace");
 
   const reviewImages = [
@@ -25,28 +25,27 @@ export default function Home() {
   const [currentReview, setCurrentReview] = useState(0);
 
   const nextReview = () => {
-    if (currentReview < reviewImages.length - 1) {
-      setCurrentReview((prev) => prev + 1);
-    }
+    if (currentReview < reviewImages.length - 1) setCurrentReview((prev) => prev + 1);
   };
 
   const prevReview = () => {
-    if (currentReview > 0) {
-      setCurrentReview((prev) => prev - 1);
-    }
+    if (currentReview > 0) setCurrentReview((prev) => prev - 1);
   };
 
   useEffect(() => {
     setMounted(true);
+    // Инициализация ВК
     bridge.send('VKWebAppInit');
     
-    // Получаем актуальную ссылку из твоего API
+    // Стучимся к боту за актуальной ссылкой
     fetch('/api/vk-bot')
       .then(res => res.json())
       .then(data => {
-        if (data.link) setChatLink(data.link);
+        if (data.link) {
+          setChatLink(data.link);
+        }
       })
-      .catch(err => console.error("Ошибка загрузки ссылки:", err));
+      .catch(err => console.error("Ошибка получения ссылки:", err));
 
     const updateEventDate = () => {
       let d = new Date(2026, 3, 14, 19, 0);
@@ -65,7 +64,6 @@ export default function Home() {
     };
 
     updateEventDate();
-
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -73,37 +71,28 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ОТКРЫТИЯ ССЫЛКИ
+  // ГЛАВНАЯ ФУНКЦИЯ КЛИКА
   const handleOpenChat = () => {
-    if (!chatLink) return;
-
-    // Пробуем через мост ВК (для Mini App)
-    // @ts-ignore - убираем красную линию на bridge.send
-    bridge.send("VKWebAppOpenURL", { "url": chatLink })
+    console.log("Кнопка нажата, открываю:", chatLink);
+    // Используем мост ВК, (as any) убирает ошибку в VS Code
+    (bridge as any).send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
-        // Если мост не сработал (обычный браузер), открываем просто так
+        // Если открыли просто в браузере, сработает этот запасной вариант
         window.open(chatLink, '_blank');
       });
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    const filteredVal = val.replace(/[0-9]/g, '');
-    setName(filteredVal);
+    setName(e.target.value.replace(/[0-9]/g, ''));
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
-    if (!input.startsWith("+7")) {
-      setPhone("+7");
-      return;
-    }
-    const digitsAfterPrefix = input.slice(2).replace(/\D/g, '');
-    const limitedDigits = digitsAfterPrefix.slice(0, 10);
-    setPhone("+7" + limitedDigits);
+    if (!input.startsWith("+7")) { setPhone("+7"); return; }
+    setPhone("+7" + input.slice(2).replace(/\D/g, '').slice(0, 10));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
     handleOpenChat();
   };
@@ -121,7 +110,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#2a0e3d] flex justify-center items-start text-white antialiased font-sans">
       <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen">
 
-        {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН */}
+        {/* СЕКЦИЯ 1 */}
         <section className="bg-[#5a2082] relative pb-20">
           <div className="px-5 pt-8 relative z-10">
             <div className="absolute top-[-10px] left-[5px] w-28 h-32 rotate-[-15deg] z-0 opacity-80">
@@ -176,6 +165,7 @@ export default function Home() {
               </div>
             </div>
             <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20 text-white">
+               {/* ТЕПЕРЬ С ONCLICK */}
                <button 
                 onClick={handleOpenChat}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
@@ -217,7 +207,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 3: ИРИНА ЛЕВШУНОВА */}
+        {/* СЕКЦИЯ 3: ИРИНА */}
         <section className="bg-[#6c2a93] relative pt-10 pb-16 px-5 flex flex-col items-center z-20 overflow-hidden font-sans">
           <div className="absolute top-[400px] left-[-30px] w-[140px] h-[140px] opacity-90 z-10 pointer-events-none rotate-[-15deg]">
              <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
@@ -236,10 +226,8 @@ export default function Home() {
             </div>
           </div>
           <div className="w-full p-1 rounded-full border-2 border-[#f04a94] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-6 relative z-30 mt-[-145px]">
-             <button 
-              onClick={handleOpenChat}
-              className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
-             >
+             {/* ТЕПЕРЬ С ONCLICK */}
+             <button onClick={handleOpenChat} className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}>
                <span className="transform -translate-y-[4px]">Принять участие</span>
              </button>
           </div>
@@ -255,7 +243,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС */}
+        {/* СЕКЦИЯ 4 */}
         <section className="bg-white text-black relative pt-16 pb-2 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 pointer-events-none rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
@@ -284,11 +272,9 @@ export default function Home() {
           </ul>
         </section>
 
-        {/* СЕКЦИЯ 5: ОТЗЫВЫ */}
+        {/* СЕКЦИЯ 5: СЛАЙДЕР */}
         <section className="bg-white relative pb-5 px-5 flex flex-col items-center z-10 overflow-hidden font-sans">
-          <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight w-full relative z-10 text-black`}>
-            Нам доверяют:<br/>наши отзывы
-          </h2>
+          <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight w-full relative z-10 text-black`}>Нам доверяют:<br/>наши отзывы</h2>
           <div className="relative w-full flex justify-center items-center z-10">
             <div className="relative w-[350px] h-[600px] transition-all duration-500">
                <Image src={reviewImages[currentReview]} alt={`Review ${currentReview + 1}`} fill className="object-contain" priority />
@@ -299,7 +285,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 6: КНОПКИ СЛАЙДЕРА */}
+        {/* СЕКЦИЯ 6: УПРАВЛЕНИЕ */}
         <section className="bg-white relative pt-4 pb-30 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="flex justify-center gap-6 mb-12 relative z-10">
             <button onClick={prevReview} disabled={currentReview === 0} className={`${btnAnimation} w-[75px] h-[75px] relative ${currentReview === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}>
@@ -315,7 +301,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 7: ФОРМА */}
+        {/* СЕКЦИЯ 7: ФИНАЛЬНАЯ ФОРМА */}
         <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute top-[20%] left-[-20px] w-24 h-24 rotate-[-15deg] opacity-80 z-0">
             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" />
@@ -332,24 +318,15 @@ export default function Home() {
             </div>
             <div className="text-center">
               <div className="text-[28px] font-bold text-white tabular-nums flex items-center justify-center">
-                <span>{displayMins}</span>
-                <span className="mx-1">:</span>
-                <span>{displaySecs}</span>
+                <span>{displayMins}</span><span className="mx-1">:</span><span>{displaySecs}</span>
               </div>
               <div className="flex justify-between text-[10px] text-white/60 uppercase">
-                <span>минут</span>
-                <span className="ml-2">секунд</span>
+                <span>минут</span><span className="ml-2">секунд</span>
               </div>
             </div>
           </div>
           <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4 relative z-10">
-            <input 
-              type="text" 
-              placeholder="Ваше Имя" 
-              value={name} 
-              onChange={handleNameChange} 
-              className="w-full h-14 bg-white rounded-full px-8 text-black font-sans text-lg focus:outline-none placeholder:text-gray-400" 
-            />
+            <input type="text" placeholder="Ваше Имя" value={name} onChange={handleNameChange} className="w-full h-14 bg-white rounded-full px-8 text-black font-sans text-lg focus:outline-none placeholder:text-gray-400" />
             <input type="tel" value={phone} onChange={handlePhoneChange} className="w-full h-14 bg-white rounded-full px-8 text-black font-sans text-lg focus:outline-none" />
             <button type="submit" className={`${cocomatClass} w-full bg-[#e62010] text-white font-black text-[22px] py-4 rounded-full mt-2 shadow-xl ${btnAnimation}`}>ПРИНЯТЬ УЧАСТИЕ</button>
           </form>
@@ -367,13 +344,10 @@ export default function Home() {
             <p>ИП Левшунова Ирина Борисовна ИНН<br/>615429347160</p>
             <p>Лицензия на осуществление<br/>образовательной деятельности №<br/>Л035-01218-23/01222051 от<br/>29.05.2024</p>
             <Link href="/privacy" className="underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity">
-              Договор в отношении политики<br/>
-              обработки персональных данных и<br/>
               Договор оферты
             </Link>
           </div>
         </footer>
-
       </div>
     </main>
   );
