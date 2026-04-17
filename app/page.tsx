@@ -12,8 +12,8 @@ export default function Home() {
   const [phone, setPhone] = useState("+7");
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
   
-  // Состояние для ссылки (берем из бота)
-  const [chatLink, setChatLink] = useState("https://vk.me/schoolmarketplace");
+  // АКТУАЛЬНАЯ ССЫЛКА НА ТВОЁ СООБЩЕСТВО
+  const [chatLink, setChatLink] = useState("https://vk.me/obuchunie_mp");
 
   const reviewImages = [
     '/images/reviews_phone.png',
@@ -40,7 +40,7 @@ export default function Home() {
     setMounted(true);
     bridge.send('VKWebAppInit');
     
-    // Получаем актуальную ссылку из твоего API
+    // Пытаемся получить ссылку из API, если бот её обновил
     fetch('/api/vk-bot')
       .then(res => res.json())
       .then(data => {
@@ -65,7 +65,6 @@ export default function Home() {
     };
 
     updateEventDate();
-
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -73,15 +72,12 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ОТКРЫТИЯ ССЫЛКИ
+  // ФУНКЦИЯ ОТКРЫТИЯ ЧАТА
   const handleOpenChat = () => {
     if (!chatLink) return;
-
-    // Пробуем через мост ВК (для Mini App)
-    // @ts-ignore - убираем красную линию на bridge.send
+    // @ts-ignore - убираем красную линию для Vercel
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
-        // Если мост не сработал (обычный браузер), открываем просто так
         window.open(chatLink, '_blank');
       });
   };
@@ -362,6 +358,7 @@ export default function Home() {
           <div className="absolute bottom-[10%] right-[-10px] w-20 h-20 rotate-[15deg] opacity-50 z-0"><Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" /></div>
         </section>
 
+        {/* СЕКЦИЯ 8: ПОДВАЛ */}
         <footer className="bg-white py-12 px-6 flex flex-col items-center justify-center text-center">
           <div className="font-sans text-[#fc60b1] text-[12px] leading-relaxed font-medium uppercase space-y-5">
             <p>ИП Левшунова Ирина Борисовна ИНН<br/>615429347160</p>
