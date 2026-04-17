@@ -12,7 +12,7 @@ export default function Home() {
   const [phone, setPhone] = useState("+7");
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
   
-  // Базовая ссылка (если бот не ответит)
+  // Сразу прописываем рабочую ссылку, чтобы кнопка знала куда вести с первой секунды
   const [chatLink, setChatLink] = useState("https://vk.me/schoolmarketplace");
 
   const reviewImages = [
@@ -34,18 +34,16 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
-    // Инициализация ВК
+    // Инициализация моста ВК
     bridge.send('VKWebAppInit');
     
-    // Стучимся к боту за актуальной ссылкой
+    // Пытаемся обновить ссылку из бота, но если не выйдет — у нас уже есть дефолтная выше
     fetch('/api/vk-bot')
       .then(res => res.json())
       .then(data => {
-        if (data.link) {
-          setChatLink(data.link);
-        }
+        if (data.link) setChatLink(data.link);
       })
-      .catch(err => console.error("Ошибка получения ссылки:", err));
+      .catch(err => console.error("Link update failed, using default:", err));
 
     const updateEventDate = () => {
       let d = new Date(2026, 3, 14, 19, 0);
@@ -71,14 +69,17 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // ГЛАВНАЯ ФУНКЦИЯ КЛИКА
-  const handleOpenChat = () => {
-    console.log("Кнопка нажата, открываю:", chatLink);
-    // Используем мост ВК, (as any) убирает ошибку в VS Code
-    (bridge as any).send("VKWebAppOpenURL", { "url": chatLink })
+  // Функция, которую вызывают все кнопки
+  const handleOpenChat = (e?: any) => {
+    if (e) e.preventDefault(); // Останавливаем стандартный переход, чтобы сработал мост ВК
+    
+    const targetUrl = chatLink || "https://vk.me/schoolmarketplace";
+    
+    // Отправляем команду в ВК (используем any чтобы не было красного кода)
+    (bridge as any).send("VKWebAppOpenURL", { "url": targetUrl })
       .catch(() => {
-        // Если открыли просто в браузере, сработает этот запасной вариант
-        window.open(chatLink, '_blank');
+        // Если мы не в ВК, а в обычном браузере — просто открываем ссылку
+        window.open(targetUrl, '_blank');
       });
   };
 
@@ -92,7 +93,7 @@ export default function Home() {
     setPhone("+7" + input.slice(2).replace(/\D/g, '').slice(0, 10));
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleOpenChat();
   };
@@ -165,7 +166,6 @@ export default function Home() {
               </div>
             </div>
             <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20 text-white">
-               {/* ТЕПЕРЬ С ONCLICK */}
                <button 
                 onClick={handleOpenChat}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
@@ -226,7 +226,6 @@ export default function Home() {
             </div>
           </div>
           <div className="w-full p-1 rounded-full border-2 border-[#f04a94] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-6 relative z-30 mt-[-145px]">
-             {/* ТЕПЕРЬ С ONCLICK */}
              <button onClick={handleOpenChat} className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}>
                <span className="transform -translate-y-[4px]">Принять участие</span>
              </button>
@@ -272,7 +271,7 @@ export default function Home() {
           </ul>
         </section>
 
-        {/* СЕКЦИЯ 5: СЛАЙДЕР */}
+        {/* СЕКЦИЯ 5 */}
         <section className="bg-white relative pb-5 px-5 flex flex-col items-center z-10 overflow-hidden font-sans">
           <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight w-full relative z-10 text-black`}>Нам доверяют:<br/>наши отзывы</h2>
           <div className="relative w-full flex justify-center items-center z-10">
@@ -285,7 +284,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 6: УПРАВЛЕНИЕ */}
+        {/* СЕКЦИЯ 6 */}
         <section className="bg-white relative pt-4 pb-30 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="flex justify-center gap-6 mb-12 relative z-10">
             <button onClick={prevReview} disabled={currentReview === 0} className={`${btnAnimation} w-[75px] h-[75px] relative ${currentReview === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}>
@@ -301,7 +300,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 7: ФИНАЛЬНАЯ ФОРМА */}
+        {/* СЕКЦИЯ 7 */}
         <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute top-[20%] left-[-20px] w-24 h-24 rotate-[-15deg] opacity-80 z-0">
             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" />
@@ -339,6 +338,7 @@ export default function Home() {
           <div className="absolute bottom-[10%] right-[-10px] w-20 h-20 rotate-[15deg] opacity-50 z-0"><Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" /></div>
         </section>
 
+        {/* СЕКЦИЯ 8 */}
         <footer className="bg-white py-12 px-6 flex flex-col items-center justify-center text-center">
           <div className="font-sans text-[#fc60b1] text-[12px] leading-relaxed font-medium uppercase space-y-5">
             <p>ИП Левшунова Ирина Борисовна ИНН<br/>615429347160</p>
