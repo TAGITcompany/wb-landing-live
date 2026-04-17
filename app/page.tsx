@@ -12,7 +12,7 @@ export default function Home() {
   const [phone, setPhone] = useState("+7");
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
   
-  // Состояние для динамической ссылки
+  // Состояние для ссылки (берем из бота)
   const [chatLink, setChatLink] = useState("https://vk.me/schoolmarketplace");
 
   const reviewImages = [
@@ -25,24 +25,28 @@ export default function Home() {
   const [currentReview, setCurrentReview] = useState(0);
 
   const nextReview = () => {
-    if (currentReview < reviewImages.length - 1) setCurrentReview((prev) => prev + 1);
+    if (currentReview < reviewImages.length - 1) {
+      setCurrentReview((prev) => prev + 1);
+    }
   };
 
   const prevReview = () => {
-    if (currentReview > 0) setCurrentReview((prev) => prev - 1);
+    if (currentReview > 0) {
+      setCurrentReview((prev) => prev - 1);
+    }
   };
 
   useEffect(() => {
     setMounted(true);
     bridge.send('VKWebAppInit');
     
-    // Получаем актуальную ссылку из нашего бота
+    // Получаем актуальную ссылку из твоего API
     fetch('/api/vk-bot')
       .then(res => res.json())
       .then(data => {
         if (data.link) setChatLink(data.link);
       })
-      .catch(err => console.error("Link fetch error:", err));
+      .catch(err => console.error("Ошибка загрузки ссылки:", err));
 
     const updateEventDate = () => {
       let d = new Date(2026, 3, 14, 19, 0);
@@ -61,6 +65,7 @@ export default function Home() {
     };
 
     updateEventDate();
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -68,22 +73,34 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // Функция открытия ссылки через ВК
+  // УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ОТКРЫТИЯ ССЫЛКИ
   const handleOpenChat = () => {
-    if (chatLink) {
-      (bridge as any).send("VKWebAppOpenURL", { "url": chatLink });
-    }
+    if (!chatLink) return;
+
+    // Пробуем через мост ВК (для Mini App)
+    // @ts-ignore - убираем красную линию на bridge.send
+    bridge.send("VKWebAppOpenURL", { "url": chatLink })
+      .catch(() => {
+        // Если мост не сработал (обычный браузер), открываем просто так
+        window.open(chatLink, '_blank');
+      });
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value.replace(/[0-9]/g, ''));
+    const val = e.target.value;
+    const filteredVal = val.replace(/[0-9]/g, '');
+    setName(filteredVal);
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
-    if (!input.startsWith("+7")) { setPhone("+7"); return; }
-    const digitsAfterPrefix = input.slice(2).replace(/\D/g, '').slice(0, 10);
-    setPhone("+7" + digitsAfterPrefix);
+    if (!input.startsWith("+7")) {
+      setPhone("+7");
+      return;
+    }
+    const digitsAfterPrefix = input.slice(2).replace(/\D/g, '');
+    const limitedDigits = digitsAfterPrefix.slice(0, 10);
+    setPhone("+7" + limitedDigits);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -159,7 +176,10 @@ export default function Home() {
               </div>
             </div>
             <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20 text-white">
-               <button onClick={handleOpenChat} className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}>
+               <button 
+                onClick={handleOpenChat}
+                className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
+               >
                  <span className="transform -translate-y-[8px]">Принять участие</span>
                </button>
             </div>
@@ -216,7 +236,12 @@ export default function Home() {
             </div>
           </div>
           <div className="w-full p-1 rounded-full border-2 border-[#f04a94] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-6 relative z-30 mt-[-145px]">
-             <button onClick={handleOpenChat} className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}><span className="transform -translate-y-[4px]">Принять участие</span></button>
+             <button 
+              onClick={handleOpenChat}
+              className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
+             >
+               <span className="transform -translate-y-[4px]">Принять участие</span>
+             </button>
           </div>
           <div className="flex justify-center gap-6 relative z-30">
             <div className="w-[75px] h-[75px] rounded-full border-[3px] border-[#df00ff] flex flex-col items-center justify-center text-white leading-none bg-[#6c2a93]/50 backdrop-blur-sm relative">
@@ -259,7 +284,7 @@ export default function Home() {
           </ul>
         </section>
 
-        {/* СЕКЦИЯ 5: ОТЗЫВЫ (СЛАЙДЕР) */}
+        {/* СЕКЦИЯ 5: ОТЗЫВЫ */}
         <section className="bg-white relative pb-5 px-5 flex flex-col items-center z-10 overflow-hidden font-sans">
           <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight w-full relative z-10 text-black`}>
             Нам доверяют:<br/>наши отзывы
@@ -274,7 +299,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 6: КНОПКИ УПРАВЛЕНИЯ СЛАЙДЕРОМ */}
+        {/* СЕКЦИЯ 6: КНОПКИ СЛАЙДЕРА */}
         <section className="bg-white relative pt-4 pb-30 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="flex justify-center gap-6 mb-12 relative z-10">
             <button onClick={prevReview} disabled={currentReview === 0} className={`${btnAnimation} w-[75px] h-[75px] relative ${currentReview === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}>
@@ -290,7 +315,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 7: ФИНАЛЬНАЯ ФОРМА */}
+        {/* СЕКЦИЯ 7: ФОРМА */}
         <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute top-[20%] left-[-20px] w-24 h-24 rotate-[-15deg] opacity-80 z-0">
             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" />
