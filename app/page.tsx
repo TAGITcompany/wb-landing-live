@@ -11,9 +11,13 @@ export default function Home() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+7");
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Актуальная ссылка с твоим ID сообщества
+  // Актуальная ссылка на чат (fallback)
   const [chatLink, setChatLink] = useState("https://vk.com/im?sel=-211046470");
+
+  // Твоя ссылка на Google Apps Script
+  const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxqkaUgccWwEdydj7EXaeBpQTtBE3ZBa65ziteeqTxlROA19LFEbVUEs4gYeChXANpd/exec";
 
   const reviewImages = [
     '/images/reviews_phone.png',
@@ -36,7 +40,6 @@ export default function Home() {
     setMounted(true);
     bridge.send('VKWebAppInit');
     
-    // Загружаем ссылку от бота заранее
     fetch('/api/vk-bot')
       .then(res => res.json())
       .then(data => {
@@ -48,7 +51,7 @@ export default function Home() {
       let d = new Date(2026, 3, 14, 19, 0);
       const now = new Date();
       while (now >= d) {
-        d.setDate(d.getDate() + 6);
+        d.setDate(d.getDate() + 6); // Твоя правка на +6 дней
       }
       const months = [
         'ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ', 'МАЯ', 'ИЮНЯ',
@@ -68,6 +71,40 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
+  // Универсальная функция открытия чата
+  const handleOpenChat = () => {
+    const urlToOpen = chatLink;
+    // @ts-ignore
+    bridge.send("VKWebAppOpenURL", { "url": urlToOpen })
+      .catch(() => {
+        window.open(urlToOpen, '_blank');
+      });
+  };
+
+  // Логика для формы: Отправка в Гугл + Открытие чата
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Отправляем данные в таблицу (no-cors чтобы не блочило)
+      fetch(GOOGLE_SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone })
+      });
+    } catch (err) {
+      console.error("Ошибка при отправке лида:", err);
+    }
+
+    // Сразу открываем чат, не дожидаясь ответа (чтобы для юзера всё было мгновенно)
+    handleOpenChat();
+    setIsSubmitting(false);
+  };
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value.replace(/[0-9]/g, ''));
   };
@@ -78,10 +115,9 @@ export default function Home() {
     setPhone("+7" + input.slice(2).replace(/\D/g, '').slice(0, 10));
   };
 
-  // Обработка клика через мост (для гарантии внутри Mini App)
   const handleLinkClick = (e: React.MouseEvent) => {
-    // @ts-ignore
-    bridge.send("VKWebAppOpenURL", { "url": chatLink });
+    e.preventDefault();
+    handleOpenChat();
   };
 
   if (!mounted) return <div className="min-h-screen bg-[#2a0e3d]" />;
@@ -90,14 +126,13 @@ export default function Home() {
   const displaySecs = (timeLeft % 60).toString().padStart(2, '0');
 
   const cocomatClass = "font-[family-name:var(--font-cocomat)]";
-  const montClass = "font-[family-name:var(--font-mont)]";
   const btnAnimation = "transition-transform duration-200 hover:scale-105 active:scale-95 cursor-pointer outline-none no-underline";
 
   return (
     <main className="min-h-screen bg-[#2a0e3d] flex justify-center items-start text-white antialiased font-sans">
       <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen">
 
-        {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН */}
+        {/* СЕКЦИЯ 1 */}
         <section className="bg-[#5a2082] relative pb-20">
           <div className="px-5 pt-8 relative z-10">
             <div className="absolute top-[-10px] left-[5px] w-28 h-32 rotate-[-15deg] z-0 opacity-80">
@@ -129,7 +164,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div style={{ background: 'linear-gradient(180deg, #FF03FF 0%, #BC03FF 100%)' }} className={`rounded-[30px] py-4 px-3 text-center shadow-[0_0_25px_rgba(223,0,255,0.7)] mb-8 relative z-20 -mt-10 flex items-center justify-center min-h-[70px] uppercase text-white ${montClass}`}>
+            <div style={{ background: 'linear-gradient(180deg, #FF03FF 0%, #BC03FF 100%)' }} className="rounded-[30px] py-4 px-3 text-center shadow-[0_0_25px_rgba(223,0,255,0.7)] mb-8 relative z-20 -mt-10 flex items-center justify-center min-h-[70px] uppercase text-white font-[family-name:var(--font-mont)]">
               <p className="text-[15px] text-center leading-[1.2] tracking-tight font-normal">С доступом в реальный кабинет<br/>поставщика на WB</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-[24px] py-5 px-6 flex justify-between items-center border border-white/10 shadow-xl mb-8 relative z-20 text-white uppercase font-sans">
@@ -154,11 +189,9 @@ export default function Home() {
             <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20">
                <a 
                 href={chatLink} 
-                target="_blank" 
                 onClick={handleLinkClick}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
                >
-                 {/* ПОПРАВКА ТУТ: Сделал текст чуть ниже на мобилках */}
                  <span className="transform md:-translate-y-[8px] -translate-y-[5px]">Принять участие</span>
                </a>
             </div>
@@ -167,16 +200,16 @@ export default function Home() {
           <div className="absolute bottom-0 left-[-10%] w-[120%] h-[60px] bg-white rounded-t-[100%] z-20"></div>
         </section>
 
-        {/* СЕКЦИЯ 2: РАСПИСАНИЕ */}
+        {/* СЕКЦИЯ 2 */}
         <section className="bg-white text-black relative pt-8 pb-10 px-5 flex flex-col items-center z-10 font-sans -mt-1 overflow-hidden">
-          <div className="absolute top-[160px] right-[-10px] w-[110px] h-[110px] opacity-90 z-0 pointer-events-none rotate-[-15deg]">
-             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
+          <div className="absolute top-[160px] right-[-10px] w-[110px] h-[110px] opacity-90 rotate-[-15deg]">
+             <Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" />
           </div>
-          <div className="absolute top-[570px] left-[-15px] w-[85px] h-[85px] opacity-90 z-0 pointer-events-none rotate-[-5deg]">
-             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
+          <div className="absolute top-[570px] left-[-15px] w-[85px] h-[85px] opacity-90 rotate-[-5deg]">
+             <Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" />
           </div>
-          <div className="absolute bottom-[-20px] right-[70px] w-[130px] h-[130px] opacity-90 z-0 pointer-events-none rotate-[15deg]">
-             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
+          <div className="absolute bottom-[-20px] right-[70px] w-[130px] h-[130px] opacity-90 rotate-[15deg]">
+             <Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" />
           </div>
           <div className="absolute bottom-[-10px] right-[-10%] w-[300px] h-[150px] z-10 pointer-events-none">
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full"><path d="M0,100 C30,100 40,20 100,50 L100,100 Z" fill="#6c2a93" /></svg>
@@ -196,19 +229,16 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 3: ИРИНА ЛЕВШУНОВА */}
+        {/* СЕКЦИЯ 3 */}
         <section className="bg-[#6c2a93] relative pt-10 pb-16 px-5 flex flex-col items-center z-20 overflow-hidden font-sans">
-          <div className="absolute top-[400px] left-[-30px] w-[140px] h-[140px] opacity-90 z-10 pointer-events-none rotate-[-15deg]">
-             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
-          </div>
           <h2 className={`${cocomatClass} text-[26px] font-extrabold text-center uppercase leading-[1.3] mb-8 tracking-wide text-white relative z-20`}>Поставщик<br/>Wildberries<br/>Ирина Левшунова</h2>
           <ul className="text-white text-[17px] leading-[1.4] mb-8 space-y-4 font-normal text-center max-w-[320px] relative z-20">
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>8 брендов клиентов на сопровождении</li>
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Общий оборот брендов — 6.5 млн. рублей в месяц</li>
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Личный доход: 600+ тысяч рублей в месяц</li>
-            <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Обучила более 1000 человек профессии «Менеджер Wildberries»</li>
+            <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Обучила более 1000 человек профессии</li>
           </ul>
-          <div className="relative w-full h-[500px] z-20 pointer-events-none flex justify-center overflow-visible">
+          <div className="relative w-full h-[500px] z-20 flex justify-center">
             <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[350px] h-[350px] bg-[#df00ff]/80 blur-[90px] rounded-full z-0"></div>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[860px] h-[1000px] z-10">
                <Image src="/images/irina.png" alt="Irina" fill className="object-contain object-bottom" priority />
@@ -217,19 +247,18 @@ export default function Home() {
           <div className="w-full p-1 rounded-full border-2 border-[#f04a94] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-6 relative z-30 mt-[-145px]">
              <a 
               href={chatLink} 
-              target="_blank" 
               onClick={handleLinkClick}
               className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
              >
                <span className="transform -translate-y-[4px]">Принять участие</span>
              </a>
           </div>
-          <div className="flex justify-center gap-6 relative z-30">
-            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-[#df00ff] flex flex-col items-center justify-center text-white leading-none bg-[#6c2a93]/50 backdrop-blur-sm relative">
+          <div className="flex justify-center gap-6 relative z-30 text-white">
+            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-[#df00ff] flex flex-col items-center justify-center leading-none bg-[#6c2a93]/50 backdrop-blur-sm">
               <span className="text-[22px] font-bold tabular-nums mb-1">{displayMins}</span>
               <span className="text-[10px] opacity-90">минут</span>
             </div>
-            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-white flex flex-col items-center justify-center text-white leading-none bg-[#6c2a93]/50 backdrop-blur-sm relative">
+            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-white flex flex-col items-center justify-center leading-none bg-[#6c2a93]/50 backdrop-blur-sm">
               <span className="text-[22px] font-bold tabular-nums mb-1">{displaySecs}</span>
               <span className="text-[10px] opacity-90">секунд</span>
             </div>
@@ -238,7 +267,7 @@ export default function Home() {
 
         {/* СЕКЦИЯ 4 */}
         <section className="bg-white text-black relative pt-16 pb-2 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
-          <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 pointer-events-none rotate-[10deg]">
+          <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
           </div>
           <div className="absolute top-[-1px] left-0 w-full h-[100px] pointer-events-none">
@@ -291,7 +320,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 7: ФОРМА */}
+        {/* СЕКЦИЯ 7: ФОРМА + ОТПРАВКА В ГУГЛ */}
         <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute top-[20%] left-[-20px] w-24 h-24 rotate-[-15deg] opacity-80 z-0">
             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" />
@@ -306,8 +335,8 @@ export default function Home() {
               <span className="font-sans text-[20px] text-white/60 line-through decoration-[#ea3f9d] decoration-2 font-bold">2990</span>
               <span className={`${cocomatClass} text-[22px] font-black text-white`}>БЕСПЛАТНО</span>
             </div>
-            <div className="text-center">
-              <div className="text-[28px] font-bold text-white tabular-nums flex items-center justify-center">
+            <div className="text-center text-white">
+              <div className="text-[28px] font-bold tabular-nums flex items-center justify-center">
                 <span>{displayMins}</span>
                 <span className="mx-1">:</span>
                 <span>{displaySecs}</span>
@@ -318,31 +347,38 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <form className="w-full flex flex-col gap-4 relative z-10">
+          
+          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4 relative z-10">
             <input 
               type="text" 
               placeholder="Ваше Имя" 
               value={name} 
               onChange={handleNameChange} 
               className="w-full h-14 bg-white rounded-full px-8 text-black font-sans text-lg focus:outline-none placeholder:text-gray-400" 
+              required
             />
-            <input type="tel" value={phone} onChange={handlePhoneChange} className="w-full h-14 bg-white rounded-full px-8 text-black font-sans text-lg focus:outline-none" />
+            <input 
+              type="tel" 
+              value={phone} 
+              onChange={handlePhoneChange} 
+              className="w-full h-14 bg-white rounded-full px-8 text-black font-sans text-lg focus:outline-none" 
+              required
+            />
             
-            <a 
-              href={chatLink} 
-              target="_blank" 
-              onClick={handleLinkClick}
-              className={`${cocomatClass} w-full bg-[#e62010] text-white font-black text-[22px] py-4 rounded-full mt-2 shadow-xl flex items-center justify-center ${btnAnimation}`}
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className={`${cocomatClass} w-full bg-[#e62010] text-white font-black text-[22px] py-4 rounded-full mt-2 shadow-xl flex items-center justify-center ${btnAnimation} ${isSubmitting ? 'opacity-50' : ''}`}
             >
-              ПРИНЯТЬ УЧАСТИЕ
-            </a>
+              {isSubmitting ? "ОТПРАВКА..." : "ПРИНЯТЬ УЧАСТИЕ"}
+            </button>
           </form>
+
           <div className="mt-12 text-center relative z-10">
             <h3 className={`${cocomatClass} text-[20px] font-black text-white uppercase leading-tight mb-2`}>КАК СТАТЬ<br/>МЕНЕДЖЕРОМ WILDBERRIES</h3>
             <p className={`${cocomatClass} text-[18px] font-black text-white uppercase`}>И ВЫЙТИ НА ДОХОД ОТ 50<br/>ТЫСЯЧ РУБЛЕЙ В МЕСЯЦ</p>
-            <p className={`${cocomatClass} text-[10px] text-white opacity-60 mt-6 leading-tight`}>*УСПЕЙ ЗАРЕГИСТРИРОВАТЬСЯ И ЗАБИРАЙ<br/>ПОШАГОВЫЙ ПЛАН ОСВОЕНИЯ ПРОФЕССИИ</p>
           </div>
-          <div className="mt-16 opacity-40 text-[12px] text-[#fc60b1]">Email: schoolmarketplace.online@yandex.ru</div>
+          <div className="mt-16 opacity-40 text-[12px] text-[#fc60b1] text-center w-full">Email: schoolmarketplace.online@yandex.ru</div>
           <div className="absolute bottom-[10%] right-[-10px] w-20 h-20 rotate-[15deg] opacity-50 z-0"><Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" /></div>
         </section>
 
