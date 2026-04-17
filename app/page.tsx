@@ -13,10 +13,10 @@ export default function Home() {
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Актуальная ссылка, которую будет открывать кнопка
+  // Актуальная ссылка
   const [chatLink, setChatLink] = useState("https://vk.me/obuchunie_mp");
 
-  // Твоя ссылка на Google Apps Script
+  // Ссылка на Google Apps Script
   const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxqkaUgccWwEdydj7EXaeBpQTtBE3ZBa65ziteeqTxlROA19LFEbVUEs4gYeChXANpd/exec";
 
   const reviewImages = [
@@ -40,22 +40,19 @@ export default function Home() {
     setMounted(true);
     bridge.send('VKWebAppInit');
     
-    // ПРЕДЗАГРУЗКА: Получаем ссылку, которую Ирина задала в боте
+    // Предзагрузка динамической ссылки
     fetch('/api/vk-bot')
       .then(res => res.json())
       .then(data => {
-        if (data.link) {
-          console.log("Ссылка из бота подтянута:", data.link);
-          setChatLink(data.link);
-        }
+        if (data.link) setChatLink(data.link);
       })
-      .catch(err => console.error("Ошибка загрузки ссылки из API:", err));
+      .catch(err => console.error("Ошибка загрузки ссылки бота:", err));
 
     const updateEventDate = () => {
       let d = new Date(2026, 3, 14, 19, 0);
       const now = new Date();
       while (now >= d) {
-        d.setDate(d.getDate() + 6); // Твоя логика +6 дней
+        d.setDate(d.getDate() + 6); // Твоя логика +6
       }
       const months = [
         'ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ', 'МАЯ', 'ИЮНЯ',
@@ -75,10 +72,8 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // Универсальная функция перехода (для кнопок 1 и 2)
-  const handleLinkClick = (e: React.MouseEvent) => {
-    // Не даем браузеру просто перейти по href, сначала пробуем мост ВК
-    e.preventDefault();
+  // ТА САМАЯ ИДЕАЛЬНАЯ ФУНКЦИЯ ПЕРЕХОДА (из третьей кнопки)
+  const handleTransitionOnly = (e: React.MouseEvent) => {
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
@@ -86,7 +81,7 @@ export default function Home() {
       });
   };
 
-  // Функция для третьей кнопки (Таблица + Переход)
+  // ФУНКЦИЯ ДЛЯ ТРЕТЬЕЙ КНОПКИ (Гугл + Переход)
   const handleFormClick = (e: React.MouseEvent) => {
     // Шлем данные в Google (в фоне)
     fetch(GOOGLE_SHEET_URL, {
@@ -96,7 +91,7 @@ export default function Home() {
       body: JSON.stringify({ name, phone })
     });
 
-    // Тут же вызываем мост ВК без задержек
+    // Тут же вызываем идеальный переход
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
@@ -126,10 +121,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#2a0e3d] flex justify-center items-start text-white antialiased font-sans">
-      <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen text-black">
+      <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen">
 
         {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН */}
-        <section className="bg-[#5a2082] relative pb-20 text-white">
+        <section className="bg-[#5a2082] relative pb-20">
           <div className="px-5 pt-8 relative z-10">
             <div className="absolute top-[-10px] left-[5px] w-28 h-32 rotate-[-15deg] z-0 opacity-80">
               <Image src="/images/books.png" alt="books" width={112} height={128} className="object-contain" />
@@ -182,10 +177,11 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20 text-white">
+            <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20">
                <a 
                 href={chatLink} 
-                onClick={handleLinkClick}
+                target="_blank" 
+                onClick={handleTransitionOnly}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
                >
                  <span className="transform md:-translate-y-[8px] -translate-y-[5px]">Принять участие</span>
@@ -211,15 +207,15 @@ export default function Home() {
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full"><path d="M0,100 C30,100 40,20 100,50 L100,100 Z" fill="#6c2a93" /></svg>
           </div>
           <h2 className={`${cocomatClass} text-[27px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight relative z-20`}>Что будет на 3-х<br/>дневном бесплатном<br/>курсе:</h2>
-          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20">
+          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20 px-2">
             <div className={`bg-[#ea3f9d] text-black ${cocomatClass} font-extrabold text-[18px] py-1.5 px-10 rounded-full mb-4 uppercase`}>1 День</div>
             <p className="text-[20px] leading-snug"><span className="font-bold">Кто такой менеджер Wildberries.</span><br/>План развития менеджера<br/>Зарплата менеджера Wildberries</p>
           </div>
-          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20">
+          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20 px-2">
             <div className={`bg-[#ea3f9d] text-black ${cocomatClass} font-extrabold text-[18px] py-1.5 px-10 rounded-full mb-4 uppercase`}>2 День</div>
             <p className="text-[20px] leading-snug"><span className="font-bold">Практический урок:</span> «Делаем<br/>карточку товара на<br/>WILDBERRIES» в реальном<br/>кабинете поставщика</p>
           </div>
-          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20">
+          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20 px-2">
             <div className={`bg-[#ea3f9d] text-black ${cocomatClass} font-extrabold text-[18px] py-1.5 px-10 rounded-full mb-4 uppercase`}>3 День</div>
             <p className="text-[20px] leading-snug"><span className="font-bold">Проверка домашнего задания</span><br/>Какие шаги нужно сделать,<br/>чтобы пройти стажировку с<br/>последующим трудоустройством.<br/>Как выйти на 50тыс. руб.</p>
           </div>
@@ -235,9 +231,9 @@ export default function Home() {
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>8 брендов клиентов на сопровождении</li>
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Общий оборот брендов — 6.5 млн. рублей в месяц</li>
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Личный доход: 600+ тысяч рублей в месяц</li>
-            <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Обучила более 1000 человек профессии «Менеджер Wildberries»</li>
+            <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Обучила более 1000 человек профессии</li>
           </ul>
-          <div className="relative w-full h-[500px] z-20 pointer-events-none flex justify-center overflow-visible">
+          <div className="relative w-full h-[500px] z-20 flex justify-center overflow-visible">
             <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[350px] h-[350px] bg-[#df00ff]/80 blur-[90px] rounded-full z-0"></div>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[860px] h-[1000px] z-10">
                <Image src="/images/irina.png" alt="Irina" fill className="object-contain object-bottom" priority />
@@ -246,7 +242,7 @@ export default function Home() {
           <div className="w-full p-1 rounded-full border-2 border-[#f04a94] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-6 relative z-30 mt-[-145px]">
              <a 
               href={chatLink} 
-              onClick={handleLinkClick}
+              onClick={handleTransitionOnly}
               className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
              >
                <span className="transform -translate-y-[4px]">Принять участие</span>
@@ -309,7 +305,7 @@ export default function Home() {
         </section>
 
         {/* СЕКЦИЯ 6: КНОПКИ СЛАЙДЕРА */}
-        <section className="bg-white relative pt-4 pb-30 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
+        <section className="bg-white relative pt-4 pb-30 px-8 flex flex-col items-center z-10 overflow-hidden font-sans text-black">
           <div className="flex justify-center gap-6 mb-12 relative z-10">
             <button onClick={prevReview} disabled={currentReview === 0} className={`${btnAnimation} w-[75px] h-[75px] relative ${currentReview === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}>
                <Image src="/images/buttom_left.png" alt="prev" fill className="object-contain" />
@@ -334,7 +330,7 @@ export default function Home() {
             <p className={`${cocomatClass} text-[14px] font-bold text-white opacity-90 uppercase leading-snug`}>ЕДИНСТВЕННЫЙ КУРС С ПРАКТИКОЙ В<br/>РЕАЛЬНОМ КАБИНЕТЕ ПОСТАВЩИКА</p>
             <p className={`${cocomatClass} text-[18px] font-bold text-white mt-4`}>{eventDate.day} {eventDate.month} В 19:00</p>
           </div>
-          <div className="w-full bg-white/10 backdrop-blur-md rounded-[24px] p-6 mb-8 flex justify-between items-center border border-white/20 relative z-10">
+          <div className="w-full bg-white/10 backdrop-blur-md rounded-[24px] p-6 mb-8 flex justify-between items-center border border-white/20 relative z-10 uppercase">
             <div className="flex flex-col">
               <span className="font-sans text-[20px] text-white/60 line-through decoration-[#ea3f9d] decoration-2 font-bold">2990</span>
               <span className={`${cocomatClass} text-[22px] font-black text-white`}>БЕСПЛАТНО</span>
@@ -369,7 +365,7 @@ export default function Home() {
               required
             />
             
-            {/* ТРЕТЬЯ КНОПКА: Переход + Фоновая отправка в гугл */}
+            {/* ТРЕТЬЯ КНОПКА: ТЕПЕРЬ ПЕРЕХОДИТ ТАК ЖЕ, КАК И ПЕРВЫЕ ДВЕ + ШЛЕТ В ГУГЛ */}
             <a 
               href={chatLink} 
               target="_blank" 
