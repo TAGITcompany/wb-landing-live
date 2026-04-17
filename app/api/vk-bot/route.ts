@@ -28,23 +28,17 @@ export async function POST(req: Request) {
         if (savedLink) finalLink = savedLink;
       } catch (e) {}
 
-      // Команда /link для админа
       if (from_id === ADMIN_ID && text.toLowerCase().startsWith('/link')) {
         const newLink = text.split(' ')[1];
         if (newLink?.startsWith('http')) {
           await redis.set('current_chat_link', newLink);
-          const res = await sendVkMessage(from_id, "✅ Ссылка обновлена!");
-          await redis.set('last_vk_error', JSON.stringify(res));
+          await sendVkMessage(from_id, "✅ Ссылка обновлена!");
           return new Response('ok');
         }
       }
 
       const welcomeMsg = `Здравствуйте! 👋\n\nВот актуальная ссылка на чат с Ириной:\n${finalLink}`;
-      
-      // Отправляем сообщение и сохраняем ответ ВК в базу для отладки
-      const vkResponse = await sendVkMessage(from_id, welcomeMsg);
-      await redis.set('last_vk_error', JSON.stringify(vkResponse));
-
+      await sendVkMessage(from_id, welcomeMsg);
       return new Response('ok');
     }
 
@@ -54,17 +48,24 @@ export async function POST(req: Request) {
   }
 }
 
-// ЭТА СТРАНИЦА ТЕПЕРЬ ПОКАЖЕТ ОШИБКУ
 export async function GET() {
-  const lastError = await redis.get('last_vk_error');
-  return new Response(
-    `СТАТУС БОТА: РАБОТАЕТ\n\nПОСЛЕДНИЙ ОТВЕТ ОТ ВК:\n${lastError || 'Запросов еще не было'}\n\nADMIN_ID в системе: ${ADMIN_ID}`,
-    { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
-  );
+  try {
+    const savedLink = await redis.get('current_chat_link');
+    const finalLink = savedLink || "https://vk.me/schoolmarketplace";
+    
+    return new Response(JSON.stringify({ link: finalLink }), {
+      headers: { 
+        'Content-Type': 'application/json; charset=utf-8',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "DB Error" }), { status: 500 });
+  }
 }
 
 async function sendVkMessage(peer_id: number, message: string) {
-  if (!VK_TOKEN) return { error: "VK_TOKEN is missing in Vercel" };
+  if (!VK_TOKEN) return;
 
   const params = new URLSearchParams({
     access_token: VK_TOKEN,
@@ -74,10 +75,8 @@ async function sendVkMessage(peer_id: number, message: string) {
     v: '5.131'
   });
 
-  const response = await fetch(`https://api.vk.com/method/messages.send`, {
+  await fetch(`https://api.vk.com/method/messages.send`, {
     method: 'POST',
     body: params
   });
-  
-  return await response.json();
 }
