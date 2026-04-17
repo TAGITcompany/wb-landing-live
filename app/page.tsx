@@ -74,7 +74,6 @@ export default function Home() {
 
   // ТА САМАЯ ИДЕАЛЬНАЯ ФУНКЦИЯ ПЕРЕХОДА (из третьей кнопки)
   const handleTransitionOnly = (e: React.MouseEvent) => {
-    e.preventDefault();
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
@@ -82,27 +81,9 @@ export default function Home() {
       });
   };
 
-  // ФУНКЦИЯ ДЛЯ ТРЕТЬЕЙ КНОПКИ (Валидация + Гугл + Переход)
+  // ФУНКЦИЯ ДЛЯ ТРЕТЬЕЙ КНОПКИ (Гугл + Переход)
   const handleFormClick = (e: React.MouseEvent) => {
-    // 1. ПРОВЕРКА НА МАТЫ И БРЕД (ЛОГИКА ОТ ДРУГА)
-    const matRegex = /(х[уy](й|и|я|е|ё)|пизд|еб[аоуеы]|бля|шлюх|хуел|залуп|дроч|гондон|пидр|пизда|еблан)/i;
-    const gibberishRegex = /[бвгджзклмнпрстфхцчшщ]{4,}/i; 
-    const cyrillicRegex = /^[А-Яа-яЁё\s\-]+$/;
-
-    if (!name || name.trim().length < 2) {
-      alert("❌ Введи нормальное имя (минимум 2 буквы)!");
-      return;
-    }
-    if (!cyrillicRegex.test(name)) {
-      alert("❌ Имя должно содержать только русские буквы!");
-      return;
-    }
-    if (matRegex.test(name) || gibberishRegex.test(name)) {
-      alert("❌ Давай без матов и непонятного набора букв в имени!");
-      return;
-    }
-
-    // 2. Если проверка пройдена — шлем данные в Google (в фоне)
+    // Шлем данные в Google (в фоне)
     fetch(GOOGLE_SHEET_URL, {
       method: 'POST',
       mode: 'no-cors',
@@ -110,7 +91,7 @@ export default function Home() {
       body: JSON.stringify({ name, phone })
     });
 
-    // 3. Тут же вызываем идеальный переход
+    // Тут же вызываем идеальный переход
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
@@ -339,7 +320,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 7: ФОРМА (С ДОБАВЛЕННОЙ ВАЛИДАЦИЕЙ) */}
+        {/* СЕКЦИЯ 7: ФОРМА */}
         <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans text-white">
           <div className="absolute top-[20%] left-[-20px] w-24 h-24 rotate-[-15deg] opacity-80 z-0">
             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" />
@@ -384,6 +365,7 @@ export default function Home() {
               required
             />
             
+            {/* ТРЕТЬЯ КНОПКА: ТЕПЕРЬ ПЕРЕХОДИТ ТАК ЖЕ, КАК И ПЕРВЫЕ ДВЕ + ШЛЕТ В ГУГЛ */}
             <a 
               href={chatLink} 
               target="_blank" 
