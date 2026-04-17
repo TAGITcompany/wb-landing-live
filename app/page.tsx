@@ -13,10 +13,10 @@ export default function Home() {
   const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Актуальная ссылка на чат (fallback)
+  // Актуальная ссылка на чат
   const [chatLink, setChatLink] = useState("https://vk.com/im?sel=-211046470");
 
-  // Твоя ссылка на Google Apps Script
+  // ТВОЯ ССЫЛКА ИЗ GOOGLE APPS SCRIPT
   const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxqkaUgccWwEdydj7EXaeBpQTtBE3ZBa65ziteeqTxlROA19LFEbVUEs4gYeChXANpd/exec";
 
   const reviewImages = [
@@ -40,18 +40,19 @@ export default function Home() {
     setMounted(true);
     bridge.send('VKWebAppInit');
     
+    // Предзагрузка ссылки от бота
     fetch('/api/vk-bot')
       .then(res => res.json())
       .then(data => {
         if (data.link) setChatLink(data.link);
       })
-      .catch(err => console.error("Ошибка загрузки ссылки:", err));
+      .catch(err => console.error("Ошибка загрузки ссылки бота:", err));
 
     const updateEventDate = () => {
       let d = new Date(2026, 3, 14, 19, 0);
       const now = new Date();
       while (now >= d) {
-        d.setDate(d.getDate() + 6); // Твоя правка на +6 дней
+        d.setDate(d.getDate() + 6); // Твоя логика +6
       }
       const months = [
         'ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ', 'МАЯ', 'ИЮНЯ',
@@ -71,38 +72,37 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // Универсальная функция открытия чата
-  const handleOpenChat = () => {
-    const urlToOpen = chatLink;
+  // Функция для кнопок 1 и 2
+  const handleSimpleClick = (e?: any) => {
+    if (e) e.preventDefault();
     // @ts-ignore
-    bridge.send("VKWebAppOpenURL", { "url": urlToOpen })
-      .catch(() => {
-        window.open(urlToOpen, '_blank');
-      });
+    bridge.send("VKWebAppOpenURL", { "url": chatLink }).catch(() => {
+      window.open(chatLink, '_blank');
+    });
   };
 
-  // Логика для формы: Отправка в Гугл + Открытие чата
+  // Функция для ФОРМЫ (Лид в гугл + переход)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
 
     setIsSubmitting(true);
 
-    try {
-      // Отправляем данные в таблицу (no-cors чтобы не блочило)
-      fetch(GOOGLE_SHEET_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone })
-      });
-    } catch (err) {
-      console.error("Ошибка при отправке лида:", err);
-    }
+    // Шлем в Google фоном
+    fetch(GOOGLE_SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone })
+    });
 
-    // Сразу открываем чат, не дожидаясь ответа (чтобы для юзера всё было мгновенно)
-    handleOpenChat();
-    setIsSubmitting(false);
+    // Мгновенный переход
+    // @ts-ignore
+    bridge.send("VKWebAppOpenURL", { "url": chatLink }).catch(() => {
+      window.location.href = chatLink;
+    });
+
+    setTimeout(() => setIsSubmitting(false), 2000);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,24 +115,20 @@ export default function Home() {
     setPhone("+7" + input.slice(2).replace(/\D/g, '').slice(0, 10));
   };
 
-  const handleLinkClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    handleOpenChat();
-  };
-
   if (!mounted) return <div className="min-h-screen bg-[#2a0e3d]" />;
 
   const displayMins = Math.floor(timeLeft / 60).toString();
   const displaySecs = (timeLeft % 60).toString().padStart(2, '0');
 
   const cocomatClass = "font-[family-name:var(--font-cocomat)]";
+  const montClass = "font-[family-name:var(--font-mont)]";
   const btnAnimation = "transition-transform duration-200 hover:scale-105 active:scale-95 cursor-pointer outline-none no-underline";
 
   return (
     <main className="min-h-screen bg-[#2a0e3d] flex justify-center items-start text-white antialiased font-sans">
       <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen">
 
-        {/* СЕКЦИЯ 1 */}
+        {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН */}
         <section className="bg-[#5a2082] relative pb-20">
           <div className="px-5 pt-8 relative z-10">
             <div className="absolute top-[-10px] left-[5px] w-28 h-32 rotate-[-15deg] z-0 opacity-80">
@@ -164,7 +160,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div style={{ background: 'linear-gradient(180deg, #FF03FF 0%, #BC03FF 100%)' }} className="rounded-[30px] py-4 px-3 text-center shadow-[0_0_25px_rgba(223,0,255,0.7)] mb-8 relative z-20 -mt-10 flex items-center justify-center min-h-[70px] uppercase text-white font-[family-name:var(--font-mont)]">
+            <div style={{ background: 'linear-gradient(180deg, #FF03FF 0%, #BC03FF 100%)' }} className={`rounded-[30px] py-4 px-3 text-center shadow-[0_0_25px_rgba(223,0,255,0.7)] mb-8 relative z-20 -mt-10 flex items-center justify-center min-h-[70px] uppercase text-white ${montClass}`}>
               <p className="text-[15px] text-center leading-[1.2] tracking-tight font-normal">С доступом в реальный кабинет<br/>поставщика на WB</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-[24px] py-5 px-6 flex justify-between items-center border border-white/10 shadow-xl mb-8 relative z-20 text-white uppercase font-sans">
@@ -187,56 +183,58 @@ export default function Home() {
               </div>
             </div>
             <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20">
-               <a 
-                href={chatLink} 
-                onClick={handleLinkClick}
+               <button 
+                onClick={handleSimpleClick}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
                >
                  <span className="transform md:-translate-y-[8px] -translate-y-[5px]">Принять участие</span>
-               </a>
+               </button>
             </div>
             <p className="text-center text-[10px] leading-tight opacity-70 px-6 uppercase tracking-wider relative z-20 pb-4 text-white font-sans">*Успей присоединиться и забирай пошаговый план освоения профессии</p>
           </div>
           <div className="absolute bottom-0 left-[-10%] w-[120%] h-[60px] bg-white rounded-t-[100%] z-20"></div>
         </section>
 
-        {/* СЕКЦИЯ 2 */}
+        {/* СЕКЦИЯ 2: РАСПИСАНИЕ */}
         <section className="bg-white text-black relative pt-8 pb-10 px-5 flex flex-col items-center z-10 font-sans -mt-1 overflow-hidden">
-          <div className="absolute top-[160px] right-[-10px] w-[110px] h-[110px] opacity-90 rotate-[-15deg]">
-             <Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" />
+          <div className="absolute top-[160px] right-[-10px] w-[110px] h-[110px] opacity-90 z-0 pointer-events-none rotate-[-15deg]">
+             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
           </div>
-          <div className="absolute top-[570px] left-[-15px] w-[85px] h-[85px] opacity-90 rotate-[-5deg]">
-             <Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" />
+          <div className="absolute top-[570px] left-[-15px] w-[85px] h-[85px] opacity-90 z-0 pointer-events-none rotate-[-5deg]">
+             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
           </div>
-          <div className="absolute bottom-[-20px] right-[70px] w-[130px] h-[130px] opacity-90 rotate-[15deg]">
-             <Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" />
+          <div className="absolute bottom-[-20px] right-[70px] w-[130px] h-[130px] opacity-90 z-0 pointer-events-none rotate-[15deg]">
+             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
           </div>
           <div className="absolute bottom-[-10px] right-[-10%] w-[300px] h-[150px] z-10 pointer-events-none">
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full"><path d="M0,100 C30,100 40,20 100,50 L100,100 Z" fill="#6c2a93" /></svg>
           </div>
           <h2 className={`${cocomatClass} text-[27px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight relative z-20`}>Что будет на 3-х<br/>дневном бесплатном<br/>курсе:</h2>
-          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20">
+          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20 px-2">
             <div className={`bg-[#ea3f9d] text-black ${cocomatClass} font-extrabold text-[18px] py-1.5 px-10 rounded-full mb-4 uppercase`}>1 День</div>
             <p className="text-[20px] leading-snug"><span className="font-bold">Кто такой менеджер Wildberries.</span><br/>План развития менеджера<br/>Зарплата менеджера Wildberries</p>
           </div>
-          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20">
+          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20 px-2">
             <div className={`bg-[#ea3f9d] text-black ${cocomatClass} font-extrabold text-[18px] py-1.5 px-10 rounded-full mb-4 uppercase`}>2 День</div>
             <p className="text-[20px] leading-snug"><span className="font-bold">Практический урок:</span> «Делаем<br/>карточку товара на<br/>WILDBERRIES» в реальном<br/>кабинете поставщика</p>
           </div>
-          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20">
+          <div className="flex flex-col items-center text-center w-full mb-10 relative z-20 px-2">
             <div className={`bg-[#ea3f9d] text-black ${cocomatClass} font-extrabold text-[18px] py-1.5 px-10 rounded-full mb-4 uppercase`}>3 День</div>
             <p className="text-[20px] leading-snug"><span className="font-bold">Проверка домашнего задания</span><br/>Какие шаги нужно сделать,<br/>чтобы пройти стажировку с<br/>последующим трудоустройством.<br/>Как выйти на 50тыс. руб.</p>
           </div>
         </section>
 
-        {/* СЕКЦИЯ 3 */}
+        {/* СЕКЦИЯ 3: ИРИНА ЛЕВШУНОВА */}
         <section className="bg-[#6c2a93] relative pt-10 pb-16 px-5 flex flex-col items-center z-20 overflow-hidden font-sans">
+          <div className="absolute top-[400px] left-[-30px] w-[140px] h-[140px] opacity-90 z-10 pointer-events-none rotate-[-15deg]">
+             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" priority />
+          </div>
           <h2 className={`${cocomatClass} text-[26px] font-extrabold text-center uppercase leading-[1.3] mb-8 tracking-wide text-white relative z-20`}>Поставщик<br/>Wildberries<br/>Ирина Левшунова</h2>
           <ul className="text-white text-[17px] leading-[1.4] mb-8 space-y-4 font-normal text-center max-w-[320px] relative z-20">
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>8 брендов клиентов на сопровождении</li>
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Общий оборот брендов — 6.5 млн. рублей в месяц</li>
             <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Личный доход: 600+ тысяч рублей в месяц</li>
-            <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Обучила более 1000 человек профессии</li>
+            <li><span className="inline-block w-1.5 h-1.5 rounded-full bg-white align-middle mr-2 mb-[2px]"></span>Обучила более 1000 человек профессии «Менеджер Wildberries»</li>
           </ul>
           <div className="relative w-full h-[500px] z-20 flex justify-center">
             <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[350px] h-[350px] bg-[#df00ff]/80 blur-[90px] rounded-full z-0"></div>
@@ -245,30 +243,32 @@ export default function Home() {
             </div>
           </div>
           <div className="w-full p-1 rounded-full border-2 border-[#f04a94] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-6 relative z-30 mt-[-145px]">
-             <a 
-              href={chatLink} 
-              onClick={handleLinkClick}
+             <button 
+              onClick={handleSimpleClick}
               className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
              >
                <span className="transform -translate-y-[4px]">Принять участие</span>
-             </a>
+             </button>
           </div>
           <div className="flex justify-center gap-6 relative z-30 text-white">
-            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-[#df00ff] flex flex-col items-center justify-center leading-none bg-[#6c2a93]/50 backdrop-blur-sm">
+            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-[#df00ff] flex flex-col items-center justify-center leading-none bg-[#6c2a93]/50 backdrop-blur-sm relative">
               <span className="text-[22px] font-bold tabular-nums mb-1">{displayMins}</span>
               <span className="text-[10px] opacity-90">минут</span>
             </div>
-            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-white flex flex-col items-center justify-center leading-none bg-[#6c2a93]/50 backdrop-blur-sm">
+            <div className="w-[75px] h-[75px] rounded-full border-[3px] border-white flex flex-col items-center justify-center leading-none bg-[#6c2a93]/50 backdrop-blur-sm relative">
               <span className="text-[22px] font-bold tabular-nums mb-1">{displaySecs}</span>
               <span className="text-[10px] opacity-90">секунд</span>
             </div>
           </div>
         </section>
 
-        {/* СЕКЦИЯ 4 */}
+        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС */}
         <section className="bg-white text-black relative pt-16 pb-2 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
-          <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 rotate-[10deg]">
+          <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 pointer-events-none rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
+          </div>
+          <div className="absolute bottom-10 right-10 w-16 h-16 opacity-30 pointer-events-none rotate-[-15deg]">
+            <Image src="/images/wb-icon.png" alt="WB icon" width={64} height={64} className="object-contain" />
           </div>
           <div className="absolute top-[-1px] left-0 w-full h-[100px] pointer-events-none">
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full rotate-180"><path d="M0,100 C30,100 40,20 100,50 L100,100 Z" fill="#6c2a93" /></svg>
@@ -291,9 +291,11 @@ export default function Home() {
           </ul>
         </section>
 
-        {/* СЕКЦИЯ 5 */}
+        {/* СЕКЦИЯ 5: ОТЗЫВЫ */}
         <section className="bg-white relative pb-5 px-5 flex flex-col items-center z-10 overflow-hidden font-sans">
-          <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight w-full relative z-10 text-black`}>Нам доверяют:<br/>наши отзывы</h2>
+          <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-10 tracking-tight w-full relative z-10 text-black`}>
+            Нам доверяют:<br/>наши отзывы
+          </h2>
           <div className="relative w-full flex justify-center items-center z-10">
             <div className="relative w-[350px] h-[600px] transition-all duration-500">
                <Image src={reviewImages[currentReview]} alt={`Review ${currentReview + 1}`} fill className="object-contain" priority />
@@ -304,7 +306,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 6 */}
+        {/* СЕКЦИЯ 6: КНОПКИ СЛАЙДЕРА */}
         <section className="bg-white relative pt-4 pb-30 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="flex justify-center gap-6 mb-12 relative z-10">
             <button onClick={prevReview} disabled={currentReview === 0} className={`${btnAnimation} w-[75px] h-[75px] relative ${currentReview === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}>
@@ -320,8 +322,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 7: ФОРМА + ОТПРАВКА В ГУГЛ */}
-        <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
+        {/* СЕКЦИЯ 7: ФОРМА */}
+        <section className="bg-[#6c2a93] relative pt-12 pb-20 px-8 flex flex-col items-center z-10 overflow-hidden font-sans text-white">
           <div className="absolute top-[20%] left-[-20px] w-24 h-24 rotate-[-15deg] opacity-80 z-0">
             <Image src="/images/wb-icon.png" alt="WB decor" fill className="object-contain" />
           </div>
@@ -382,6 +384,7 @@ export default function Home() {
           <div className="absolute bottom-[10%] right-[-10px] w-20 h-20 rotate-[15deg] opacity-50 z-0"><Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" /></div>
         </section>
 
+        {/* СЕКЦИЯ 8: ПОДВАЛ */}
         <footer className="bg-white py-12 px-6 flex flex-col items-center justify-center text-center">
           <div className="font-sans text-[#fc60b1] text-[12px] leading-relaxed font-medium uppercase space-y-5">
             <p>ИП Левшунова Ирина Борисовна ИНН<br/>615429347160</p>
