@@ -97,7 +97,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#2a0e3d] flex justify-center items-start text-white antialiased font-sans">
       <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen">
 
-        {/* СЕКЦИЯ 1 */}
+        {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН */}
         <section className="bg-[#5a2082] relative pb-20">
           <div className="px-5 pt-8 relative z-10">
             <div className="absolute top-[-10px] left-[5px] w-28 h-32 rotate-[-15deg] z-0 opacity-80">
@@ -152,14 +152,14 @@ export default function Home() {
               </div>
             </div>
             <div className="w-full p-1 rounded-full border-2 border-[#f04a94] bg-[#5a2082] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-4 relative z-20">
-               {/* ЗАМЕНЕНО НА <a> */}
                <a 
                 href={chatLink} 
                 target="_blank" 
                 onClick={handleLinkClick}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
                >
-                 <span className="transform -translate-y-[8px]">Принять участие</span>
+                 {/* ПОПРАВКА ТУТ: Сделал текст чуть ниже на мобилках */}
+                 <span className="transform md:-translate-y-[8px] -translate-y-[5px]">Принять участие</span>
                </a>
             </div>
             <p className="text-center text-[10px] leading-tight opacity-70 px-6 uppercase tracking-wider relative z-20 pb-4 text-white font-sans">*Успей присоединиться и забирай пошаговый план освоения профессии</p>
@@ -215,7 +215,6 @@ export default function Home() {
             </div>
           </div>
           <div className="w-full p-1 rounded-full border-2 border-[#f04a94] shadow-[0_0_20px_rgba(240,74,148,0.4)] mb-6 relative z-30 mt-[-145px]">
-             {/* ЗАМЕНЕНО НА <a> */}
              <a 
               href={chatLink} 
               target="_blank" 
@@ -329,7 +328,6 @@ export default function Home() {
             />
             <input type="tel" value={phone} onChange={handlePhoneChange} className="w-full h-14 bg-white rounded-full px-8 text-black font-sans text-lg focus:outline-none" />
             
-            {/* ЗАМЕНЕНО НА <a> */}
             <a 
               href={chatLink} 
               target="_blank" 
@@ -353,6 +351,8 @@ export default function Home() {
             <p>ИП Левшунова Ирина Борисовна ИНН<br/>615429347160</p>
             <p>Лицензия на осуществление<br/>образовательной деятельности №<br/>Л035-01218-23/01222051 от<br/>29.05.2024</p>
             <Link href="/privacy" className="underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity">
+              Договор в отношении политики<br/>
+              обработки персональных данных и<br/>
               Договор оферты
             </Link>
           </div>
