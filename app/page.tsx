@@ -10,7 +10,6 @@ export default function Home() {
   const [timeLeft, setTimeLeft] = useState(120); 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+7");
-  const [eventDate, setEventDate] = useState({ day: '14', month: 'АПРЕЛЯ' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Актуальная ссылка
@@ -48,23 +47,6 @@ export default function Home() {
       })
       .catch(err => console.error("Ошибка загрузки ссылки бота:", err));
 
-    const updateEventDate = () => {
-      let d = new Date(2026, 3, 14, 19, 0);
-      const now = new Date();
-      while (now >= d) {
-        d.setDate(d.getDate() + 6); // Твоя логика +6
-      }
-      const months = [
-        'ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ', 'МАЯ', 'ИЮНЯ',
-        'ИЮЛЯ', 'АВГУСТА', 'СЕНТЯБРЯ', 'ОКТЯБРЯ', 'НОЯБРЯ', 'ДЕКАБРЯ'
-      ];
-      setEventDate({
-        day: d.getDate().toString(),
-        month: months[d.getMonth()]
-      });
-    };
-
-    updateEventDate();
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -74,6 +56,7 @@ export default function Home() {
 
   // ТА САМАЯ ИДЕАЛЬНАЯ ФУНКЦИЯ ПЕРЕХОДА (из третьей кнопки)
   const handleTransitionOnly = (e: React.MouseEvent) => {
+    e.preventDefault();
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
@@ -133,12 +116,7 @@ export default function Home() {
               <Image src="/images/books.png" alt="books" fill className="object-contain" />
             </div>
             <div className="text-center mb-6 relative z-10 -mt-4 uppercase text-white">
-              <p className="text-[14px] font-normal opacity-90 font-sans flex items-center justify-center">
-                <span className="tracking-tighter">{eventDate.day}</span>
-                <span className={`${cocomatClass} mx-1.5 leading-none pt-[1px]`}>{eventDate.month} В</span>
-                <span className="tracking-normal">19:00</span>
-              </p>
-              <h2 className={`${cocomatClass} text-[22px] font-bold leading-none mt-1`}>Бесплатный</h2>
+              <h2 className={`${cocomatClass} text-[22px] font-bold leading-none mt-1`}>Бесплатный курс</h2>
               <p className="text-[12px] font-normal tracking-[0.1em] mt-1 opacity-80 font-sans">"Менеджер маркетплейсов"</p>
             </div>
             <div className="relative mb-6 flex min-h-[300px] -mt-10">
@@ -184,7 +162,7 @@ export default function Home() {
                 onClick={handleTransitionOnly}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
                >
-                 <span className="transform md:-translate-y-[8px] -translate-y-[5px]">Принять участие</span>
+                 <span className="transform md:-translate-y-[8px] -translate-y-[5px]">Вступить в чат</span>
                </a>
             </div>
             <p className="text-center text-[10px] leading-tight opacity-70 px-6 uppercase tracking-wider relative z-20 pb-4 text-white font-sans">*Успей присоединиться и забирай пошаговый план освоения профессии</p>
@@ -245,7 +223,7 @@ export default function Home() {
               onClick={handleTransitionOnly}
               className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
              >
-               <span className="transform -translate-y-[4px]">Принять участие</span>
+               <span className="transform -translate-y-[4px]">Вступить в чат</span>
              </a>
           </div>
           <div className="flex justify-center gap-6 relative z-30">
@@ -328,7 +306,6 @@ export default function Home() {
           <div className="text-center mb-10 relative z-10">
             <h2 className={`${cocomatClass} text-[24px] font-black text-white uppercase leading-tight mb-2`}>БЕСПЛАТНЫЙ<br/>ПРАКТИЧЕСКИЙ КУРС</h2>
             <p className={`${cocomatClass} text-[14px] font-bold text-white opacity-90 uppercase leading-snug`}>ЕДИНСТВЕННЫЙ КУРС С ПРАКТИКОЙ В<br/>РЕАЛЬНОМ КАБИНЕТЕ ПОСТАВЩИКА</p>
-            <p className={`${cocomatClass} text-[18px] font-bold text-white mt-4`}>{eventDate.day} {eventDate.month} В 19:00</p>
           </div>
           <div className="w-full bg-white/10 backdrop-blur-md rounded-[24px] p-6 mb-8 flex justify-between items-center border border-white/20 relative z-10 uppercase">
             <div className="flex flex-col">
@@ -365,14 +342,13 @@ export default function Home() {
               required
             />
             
-            {/* ТРЕТЬЯ КНОПКА: ТЕПЕРЬ ПЕРЕХОДИТ ТАК ЖЕ, КАК И ПЕРВЫЕ ДВЕ + ШЛЕТ В ГУГЛ */}
             <a 
               href={chatLink} 
               target="_blank" 
               onClick={handleFormClick}
               className={`${cocomatClass} w-full bg-[#e62010] text-white font-black text-[22px] py-4 rounded-full mt-2 shadow-xl flex items-center justify-center ${btnAnimation}`}
             >
-              ПРИНЯТЬ УЧАСТИЕ
+              Вступить в чат
             </a>
           </div>
 

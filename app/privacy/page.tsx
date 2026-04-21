@@ -7,7 +7,7 @@ export default function PrivacyPolicy() {
     <main className="min-h-screen bg-white text-black font-sans p-6 md:p-12 antialiased">
       <div className="max-w-[900px] mx-auto">
         {/* Кнопка возврата на главную */}
-        <Link href="/" className="inline-flex items-center text-[#fc60b1] mb-10 hover:opacity-70 transition-opacity no-underline group">
+        <Link href="/" className="inline-flex items-center text-[#fc60b1] mt-[20px] mb-10 hover:opacity-70 transition-opacity no-underline group">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 transform group-hover:-translate-x-1 transition-transform">
             <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -122,7 +122,7 @@ export default function PrivacyPolicy() {
             <h2 className="font-bold text-xl mb-4 uppercase">7. Цели обработки персональных данных</h2>
             <p>7.1. Цель обработки персональных данных Пользователя: информирование посредством отправки электронных писем; заключение, исполнение и прекращение гражданско-правовых договоров; предоставление доступа к материалам на сайте.</p>
             <p className="mt-4">7.2. Также Оператор имеет право направлять Пользователю уведомления о новых продуктах. Пользователь может отказаться, написав на ilevshunova88@mail.ru.</p>
-            <p className="mt-4">7.3. Обезличенные данные служат для сбора информации о действиях Пользователей на сайте и улучшения качества его содержания.</p>
+            <p className="mt-4">7.3. Обезличенные данные служат для сбора информации о действий Пользователей на сайте и улучшения качества его содержания.</p>
           </section>
 
           <section>
