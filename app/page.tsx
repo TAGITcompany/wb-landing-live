@@ -360,16 +360,20 @@ export default function Home() {
           <div className="absolute bottom-[10%] right-[-10px] w-20 h-20 rotate-[15deg] opacity-50 z-0"><Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" /></div>
         </section>
 
-        {/* СЕКЦИЯ 8: ПОДВАЛ */}
+        {/* СЕКЦИЯ 8: ПОДВАЛ (С РАЗДЕЛЕННЫМИ ССЫЛКАМИ) */}
         <footer className="bg-white py-12 px-6 flex flex-col items-center justify-center text-center text-[#fc60b1]">
           <div className="font-sans text-[12px] leading-relaxed font-medium uppercase space-y-5">
             <p>ИП Левшунова Ирина Борисовна ИНН<br/>615429347160</p>
             <p>Лицензия на осуществление<br/>образовательной деятельности №<br/>Л035-01218-23/01222051 от<br/>29.05.2024</p>
-            <Link href="/privacy" className="underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity">
-              Договор в отношении политики<br/>
-              обработки персональных данных и<br/>
-              Договор оферты
-            </Link>
+            <div className="flex flex-col items-center">
+              <Link href="/privacy" className="underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity">
+                Договор в отношении политики<br/>
+                обработки персональных данных и
+              </Link>
+              <a href="https://drive.google.com/file/d/1DAX7Utd6NoIthynRJ8jYCVFGnlIEmNre/view" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity mt-1">
+                Договор оферты
+              </a>
+            </div>
           </div>
         </footer>
 
