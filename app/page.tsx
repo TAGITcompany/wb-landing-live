@@ -106,9 +106,9 @@ export default function Home() {
     <main className="min-h-screen bg-[#2a0e3d] flex justify-center items-start text-white antialiased font-sans">
       <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen">
 
-        {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН */}
-        <section className="bg-[#5a2082] relative pb-20">
-          <div className="px-5 pt-8 relative z-10">
+        {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН (Опущена на 30 пикселей) */}
+        <section className="bg-[#5a2082] relative pb-20 text-white">
+          <div className="px-5 pt-[62px] relative z-10">
             <div className="absolute top-[-10px] left-[5px] w-28 h-32 rotate-[-15deg] z-0 opacity-80">
               <Image src="/images/books.png" alt="books" width={112} height={128} className="object-contain" />
             </div>
@@ -238,9 +238,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС */}
+        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС (Иконка приподнята) */}
         <section className="bg-white text-black relative pt-16 pb-2 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
-          <div className="absolute bottom-[-15px] right-[-15px] w-28 h-28 opacity-100 pointer-events-none rotate-[10deg]">
+          <div className="absolute bottom-[40px] right-0 w-20 h-20 opacity-100 pointer-events-none rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
           </div>
           <div className="absolute bottom-10 right-10 w-16 h-16 opacity-30 pointer-events-none rotate-[-15deg]">
@@ -250,7 +250,7 @@ export default function Home() {
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full rotate-180"><path d="M0,100 C30,100 40,20 100,50 L100,100 Z" fill="#6c2a93" /></svg>
           </div>
           <h2 className={`${cocomatClass} text-[22px] font-extrabold text-center uppercase leading-[1.2] mb-12 tracking-tight w-full pt-10`}>Этот практический<br/>курс для вас, если вы:</h2>
-          <ul className="flex flex-col gap-10 w-full pl-2">
+          <ul className="flex flex-col gap-10 w-full pl-2 relative z-10">
             {[
               { text: "Мама, которая хочет иметь финансовую независимость и проводить время с детьми", filled: true },
               { text: "Хотите перейти в онлайн, обучиться самой востребованной профессии", filled: false },
