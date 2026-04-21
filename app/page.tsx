@@ -56,7 +56,7 @@ export default function Home() {
 
   // ТА САМАЯ ИДЕАЛЬНАЯ ФУНКЦИЯ ПЕРЕХОДА (из третьей кнопки)
   const handleTransitionOnly = (e: React.MouseEvent) => {
-    e.preventDefault();
+    // Убрали e.preventDefault(); чтобы нативная ссылка <a> работала как часы
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
@@ -162,7 +162,7 @@ export default function Home() {
                 onClick={handleTransitionOnly}
                 className={`w-full bg-[#f04a94] rounded-full py-5 text-[32px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
                >
-                 <span className="transform md:-translate-y-[8px] -translate-y-[5px]">Вступить в чат</span>
+                 <span className="transform md:-translate-y-[8px] -translate-y-[5px] text-center leading-[1.1]">Перейти в чат<br/>обучения</span>
                </a>
             </div>
             <p className="text-center text-[10px] leading-tight opacity-70 px-6 uppercase tracking-wider relative z-20 pb-4 text-white font-sans">*Успей присоединиться и забирай пошаговый план освоения профессии</p>
@@ -223,7 +223,7 @@ export default function Home() {
               onClick={handleTransitionOnly}
               className={`w-full bg-[#f04a94] rounded-full py-5 text-[28px] text-white ${cocomatClass} font-bold flex items-center justify-center leading-none ${btnAnimation}`}
              >
-               <span className="transform -translate-y-[4px]">Вступить в чат</span>
+               <span className="transform -translate-y-[4px] text-center leading-[1.1]">Перейти в чат<br/>обучения</span>
              </a>
           </div>
           <div className="flex justify-center gap-6 relative z-30">
@@ -346,9 +346,9 @@ export default function Home() {
               href={chatLink} 
               target="_blank" 
               onClick={handleFormClick}
-              className={`${cocomatClass} w-full bg-[#e62010] text-white font-black text-[22px] py-4 rounded-full mt-2 shadow-xl flex items-center justify-center ${btnAnimation}`}
+              className={`${cocomatClass} w-full bg-[#e62010] text-white font-black text-[22px] py-4 rounded-full mt-2 shadow-xl flex items-center justify-center text-center leading-[1.1] ${btnAnimation}`}
             >
-              Вступить в чат
+              Перейти в чат<br/>обучения
             </a>
           </div>
 
