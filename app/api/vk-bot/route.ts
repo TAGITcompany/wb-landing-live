@@ -21,14 +21,16 @@ export async function POST(req: Request) {
     if (data.type === 'message_new') {
       const from_id = data.object.message.from_id;
       const text = data.object.message.text || '';
-      const ref = data.object.message.ref || ''; // ДОБАВЛЕНО: Ловим метку из мини-аппа
+      const ref = data.object.message.ref || ''; // ЛОВИМ МЕТКУ ПЕРЕХОДА
 
-      let finalLink = "https://vk.me/schoolmarketplace"; 
+      // Пытаемся достать ту самую ссылку, которую подгрузили девочки
+      let realChatLink = ""; 
       try {
         const savedLink = await redis.get('current_chat_link');
-        if (savedLink) finalLink = savedLink;
+        realChatLink = savedLink || "";
       } catch (e) {}
 
+      // Логика Ирины (обновление ссылки через /link) - ОСТАВИЛ БЕЗ ИЗМЕНЕНИЙ
       if (from_id === ADMIN_ID && text.toLowerCase().startsWith('/link')) {
         const newLink = text.split(' ')[1];
         if (newLink?.startsWith('http')) {
@@ -39,9 +41,9 @@ export async function POST(req: Request) {
         }
       }
 
-      // ДОБАВЛЕНО: Бот отвечает только если человек перешел по ссылке с меткой ref=miniapp
+      // ТВОЙ НОВЫЙ ФИЛЬТР: Отвечаем только тем, кто пришел из мини-аппа (есть метка ref)
       if (ref === 'miniapp') {
-        const welcomeMsg = `Здравствуйте! 👋\n\nВот актуальная ссылка на чат с Ириной:\n${finalLink}`;
+        const welcomeMsg = `Здравствуйте! 👋\n\nВот актуальная ссылка на чат с Ириной:\n${realChatLink || "Ссылка скоро появится, подождите немного!"}`;
         const vkResponse = await sendVkMessage(from_id, welcomeMsg);
         await redis.set('last_vk_error', JSON.stringify(vkResponse));
       }
@@ -55,17 +57,16 @@ export async function POST(req: Request) {
   }
 }
 
-// ОБНОВЛЕННЫЙ GET: Отдает ссылку для фронтенда и инфу для тебя
+// ОБНОВЛЕННЫЙ GET: Теперь кнопки в приложении будут вести на БОТА с секретной меткой
 export async function GET() {
-  const savedLink = await redis.get('current_chat_link');
   const lastError = await redis.get('last_vk_error');
   
-  // ДОБАВЛЕНО: Фронтенд теперь всегда получает ссылку на бота с меткой
-  const finalLink = "https://vk.me/schoolmarketplace?ref=miniapp";
+  // Используем прямой ID паблика (211046470), чтобы не было "параши"
+  const botLinkWithRef = "https://vk.me/public211046470?ref=miniapp";
   
   return new Response(JSON.stringify({ 
     status: "WORKING",
-    link: finalLink,
+    link: botLinkWithRef,
     last_vk_response: lastError ? JSON.parse(lastError) : "No requests yet",
     admin_id: ADMIN_ID
   }), { 
