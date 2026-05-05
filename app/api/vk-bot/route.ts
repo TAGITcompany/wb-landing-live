@@ -21,16 +21,8 @@ export async function POST(req: Request) {
     if (data.type === 'message_new') {
       const from_id = data.object.message.from_id;
       const text = data.object.message.text || '';
-      const ref = data.object.message.ref || ''; // ЛОВИМ МЕТКУ ПЕРЕХОДА
 
-      // Пытаемся достать ту самую ссылку, которую подгрузили девочки
-      let realChatLink = ""; 
-      try {
-        const savedLink = await redis.get('current_chat_link');
-        realChatLink = savedLink || "";
-      } catch (e) {}
-
-      // Логика Ирины (обновление ссылки через /link) - ОСТАВИЛ БЕЗ ИЗМЕНЕНИЙ
+      // 1. Логика Ирины (сохранение ссылки) - РАБОТАЕТ КАК РАНЬШЕ
       if (from_id === ADMIN_ID && text.toLowerCase().startsWith('/link')) {
         const newLink = text.split(' ')[1];
         if (newLink?.startsWith('http')) {
@@ -41,12 +33,8 @@ export async function POST(req: Request) {
         }
       }
 
-      // ТВОЙ НОВЫЙ ФИЛЬТР: Отвечаем только тем, кто пришел из мини-аппа (есть метка ref)
-      if (ref === 'miniapp') {
-        const welcomeMsg = `Здравствуйте! 👋\n\nВот актуальная ссылка на чат с Ириной:\n${realChatLink || "Ссылка скоро появится, подождите немного!"}`;
-        const vkResponse = await sendVkMessage(from_id, welcomeMsg);
-        await redis.set('last_vk_error', JSON.stringify(vkResponse));
-      }
+      // 2. ВОТ И ВСЁ! Мы просто удалили код, который отправлял ссылку в ответ всем подряд.
+      // Теперь бот будет молчать на обычные сообщения. Левые люди в воронку не пройдут.
 
       return new Response('ok');
     }
@@ -57,16 +45,18 @@ export async function POST(req: Request) {
   }
 }
 
-// ОБНОВЛЕННЫЙ GET: Теперь кнопки в приложении будут вести на БОТА с секретной меткой
+// ОБНОВЛЕННЫЙ GET: Возвращаем как было! Отдаем ПРЯМУЮ ссылку на чат, 
+// чтобы в мини-аппе снова вылезала та самая "менюшка вступления в чат Иры".
 export async function GET() {
+  const savedLink = await redis.get('current_chat_link');
   const lastError = await redis.get('last_vk_error');
   
-  // Используем прямой ID паблика (211046470), чтобы не было "параши"
-  const botLinkWithRef = "https://vk.me/public211046470?ref=miniapp";
+  // Возвращаем прямую ссылку на беседу, которую Ирина сохранила через /link
+  const finalLink = savedLink || "https://vk.me/obuchunie_mp";
   
   return new Response(JSON.stringify({ 
     status: "WORKING",
-    link: botLinkWithRef,
+    link: finalLink,
     last_vk_response: lastError ? JSON.parse(lastError) : "No requests yet",
     admin_id: ADMIN_ID
   }), { 
