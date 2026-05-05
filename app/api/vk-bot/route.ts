@@ -1,7 +1,5 @@
 import Redis from 'ioredis';
 
-import Redis from 'ioredis';
-
 const redis = new Redis(process.env.REDIS_URL || '');
 const VK_TOKEN = process.env.VK_TOKEN;
 const VK_CONFIRMATION = process.env.VK_CONFIRMATION;
@@ -23,7 +21,7 @@ export async function POST(req: Request) {
     if (data.type === 'message_new') {
       const from_id = data.object.message.from_id;
       const text = data.object.message.text || '';
-      const ref = data.object.message.ref || ''; // ЛОВИМ МЕТКУ ПЕРЕХОДА ИЗ МИНИ-АППА
+      const ref = data.object.message.ref || ''; // ДОБАВЛЕНО: Ловим метку из мини-аппа
 
       let finalLink = "https://vk.me/schoolmarketplace"; 
       try {
@@ -41,7 +39,7 @@ export async function POST(req: Request) {
         }
       }
 
-      // ЖЕСТКАЯ ПРОВЕРКА: Если метка есть - отдаем ссылку. Если нет - просто игнорим
+      // ДОБАВЛЕНО: Бот отвечает только если человек перешел по ссылке с меткой ref=miniapp
       if (ref === 'miniapp') {
         const welcomeMsg = `Здравствуйте! 👋\n\nВот актуальная ссылка на чат с Ириной:\n${finalLink}`;
         const vkResponse = await sendVkMessage(from_id, welcomeMsg);
@@ -57,16 +55,17 @@ export async function POST(req: Request) {
   }
 }
 
-// ОБНОВЛЕННЫЙ GET: Отдает ссылку для фронтенда с меткой и инфу для тебя
+// ОБНОВЛЕННЫЙ GET: Отдает ссылку для фронтенда и инфу для тебя
 export async function GET() {
+  const savedLink = await redis.get('current_chat_link');
   const lastError = await redis.get('last_vk_error');
   
-  // Фронтенд получит эту ссылку, и все кнопки мини-аппа будут вести на бота с меткой
-  const linkWithRef = "https://vk.me/schoolmarketplace?ref=miniapp";
+  // ДОБАВЛЕНО: Фронтенд теперь всегда получает ссылку на бота с меткой
+  const finalLink = "https://vk.me/schoolmarketplace?ref=miniapp";
   
   return new Response(JSON.stringify({ 
     status: "WORKING",
-    link: linkWithRef,
+    link: finalLink,
     last_vk_response: lastError ? JSON.parse(lastError) : "No requests yet",
     admin_id: ADMIN_ID
   }), { 
