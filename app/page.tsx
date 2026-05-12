@@ -11,7 +11,7 @@ export default function Home() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+7");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showToast, setShowToast] = useState(false); // Состояние для нашего уведомления
+  const [showToast, setShowToast] = useState(false);
   
   // Актуальная ссылка
   const [chatLink, setChatLink] = useState("https://vk.me/obuchunie_mp");
@@ -60,41 +60,40 @@ export default function Home() {
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
-    }, 3000); // Скрываем через 3 секунды
+    }, 3000);
   };
 
   // ТА САМАЯ ИДЕАЛЬНАЯ ФУНКЦИЯ ПЕРЕХОДА (для первых двух кнопок)
   const handleTransitionOnly = (e: React.MouseEvent) => {
-    e.preventDefault(); // Блокируем стандартный переход
-
-    // Проверяем: есть ли имя и ровно ли 11 цифр в телефоне
+    // Проверяем форму ПЕРЕД блокировкой
     const digitsOnly = phone.replace(/\D/g, '');
     if (!name.trim() || digitsOnly.length !== 11) {
-      // Если не заполнено — показываем уведомление и плавно скроллим к форме
+      e.preventDefault(); // Блокируем переход ТОЛЬКО если форма кривая
       triggerErrorToast();
       document.getElementById('form-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
+    // Если форма заполнена, НЕ блокируем e.preventDefault()!
+    // Даем родному ВК-шному <a> тегу сделать свою работу
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
-        window.open(chatLink, '_blank');
+        window.open(chatLink, '_blank'); // Вернул твой оригинальный рабочий вариант
       });
   };
 
   // ФУНКЦИЯ ДЛЯ ТРЕТЬЕЙ КНОПКИ (Гугл + Переход)
   const handleFormClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Блокируем стандартный переход
-
-    // Проверяем: есть ли имя и ровно ли 11 цифр в телефоне
+    // Проверяем форму ПЕРЕД блокировкой
     const digitsOnly = phone.replace(/\D/g, '');
     if (!name.trim() || digitsOnly.length !== 11) {
-      triggerErrorToast(); // Просто показываем уведомление
+      e.preventDefault(); // Блокируем переход
+      triggerErrorToast(); 
       return; 
     }
 
-    // Шлем данные в Google (в фоне)
+    // Форма валидна. Шлем данные в Google (в фоне)
     fetch(GOOGLE_SHEET_URL, {
       method: 'POST',
       mode: 'no-cors',
@@ -102,7 +101,7 @@ export default function Home() {
       body: JSON.stringify({ name, phone })
     });
 
-    // Тут же вызываем идеальный переход
+    // Нативный переход от <a> тега сработает идеально
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
@@ -146,7 +145,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН (Опущена на 30 пикселей) */}
+        {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН */}
         <section className="bg-[#5a2082] relative pb-20 text-white">
           <div className="px-5 pt-[62px] relative z-10">
             <div className="absolute top-[-10px] left-[5px] w-28 h-32 rotate-[-15deg] z-0 opacity-80">
@@ -278,7 +277,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС (Иконка приподнята) */}
+        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС */}
         <section className="bg-white text-black relative pt-16 pb-2 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute bottom-[40px] right-0 w-20 h-20 opacity-100 pointer-events-none rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
@@ -400,7 +399,7 @@ export default function Home() {
           <div className="absolute bottom-[10%] right-[-10px] w-20 h-20 rotate-[15deg] opacity-50 z-0"><Image src="/images/wb-icon.png" alt="WB" fill className="object-contain" /></div>
         </section>
 
-        {/* СЕКЦИЯ 8: ПОДВАЛ (С РАЗДЕЛЕННЫМИ ССЫЛКАМИ) */}
+        {/* СЕКЦИЯ 8: ПОДВАЛ */}
         <footer className="bg-white py-12 px-6 flex flex-col items-center justify-center text-center text-[#fc60b1]">
           <div className="font-sans text-[12px] leading-relaxed font-medium uppercase space-y-5">
             <p>ИП Левшунова Ирина Борисовна ИНН<br/>615429347160</p>
