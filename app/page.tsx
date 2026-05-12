@@ -54,9 +54,18 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // ТА САМАЯ ИДЕАЛЬНАЯ ФУНКЦИЯ ПЕРЕХОДА (из третьей кнопки)
+  // ТА САМАЯ ИДЕАЛЬНАЯ ФУНКЦИЯ ПЕРЕХОДА (для первых двух кнопок)
   const handleTransitionOnly = (e: React.MouseEvent) => {
-    // Убрали e.preventDefault(); чтобы нативная ссылка <a> работала как часы
+    e.preventDefault(); // Блокируем стандартный переход
+
+    // Проверяем: есть ли имя и ровно ли 11 цифр в телефоне
+    const digitsOnly = phone.replace(/\D/g, '');
+    if (!name.trim() || digitsOnly.length !== 11) {
+      // Если не заполнено — плавно скроллим к форме
+      document.getElementById('form-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
     // @ts-ignore
     bridge.send("VKWebAppOpenURL", { "url": chatLink })
       .catch(() => {
@@ -66,6 +75,14 @@ export default function Home() {
 
   // ФУНКЦИЯ ДЛЯ ТРЕТЬЕЙ КНОПКИ (Гугл + Переход)
   const handleFormClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Блокируем стандартный переход
+
+    // Проверяем: есть ли имя и ровно ли 11 цифр в телефоне
+    const digitsOnly = phone.replace(/\D/g, '');
+    if (!name.trim() || digitsOnly.length !== 11) {
+      return; // Просто не даем нажать кнопку
+    }
+
     // Шлем данные в Google (в фоне)
     fetch(GOOGLE_SHEET_URL, {
       method: 'POST',
@@ -238,7 +255,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС (Иконка приподнята) */}
+        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС */}
         <section className="bg-white text-black relative pt-16 pb-2 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute bottom-[40px] right-0 w-20 h-20 opacity-100 pointer-events-none rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
@@ -325,7 +342,7 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="w-full flex flex-col gap-4 relative z-10">
+          <div id="form-section" className="w-full flex flex-col gap-4 relative z-10">
             <input 
               type="text" 
               placeholder="Ваше Имя" 
