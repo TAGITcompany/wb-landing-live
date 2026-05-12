@@ -11,6 +11,7 @@ export default function Home() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+7");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showToast, setShowToast] = useState(false); // Состояние для нашего уведомления
   
   // Актуальная ссылка
   const [chatLink, setChatLink] = useState("https://vk.me/obuchunie_mp");
@@ -54,6 +55,14 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
+  // Функция вызова красивого уведомления
+  const triggerErrorToast = () => {
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000); // Скрываем через 3 секунды
+  };
+
   // ТА САМАЯ ИДЕАЛЬНАЯ ФУНКЦИЯ ПЕРЕХОДА (для первых двух кнопок)
   const handleTransitionOnly = (e: React.MouseEvent) => {
     e.preventDefault(); // Блокируем стандартный переход
@@ -61,7 +70,8 @@ export default function Home() {
     // Проверяем: есть ли имя и ровно ли 11 цифр в телефоне
     const digitsOnly = phone.replace(/\D/g, '');
     if (!name.trim() || digitsOnly.length !== 11) {
-      // Если не заполнено — плавно скроллим к форме
+      // Если не заполнено — показываем уведомление и плавно скроллим к форме
+      triggerErrorToast();
       document.getElementById('form-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
@@ -80,7 +90,8 @@ export default function Home() {
     // Проверяем: есть ли имя и ровно ли 11 цифр в телефоне
     const digitsOnly = phone.replace(/\D/g, '');
     if (!name.trim() || digitsOnly.length !== 11) {
-      return; // Просто не даем нажать кнопку
+      triggerErrorToast(); // Просто показываем уведомление
+      return; 
     }
 
     // Шлем данные в Google (в фоне)
@@ -122,6 +133,18 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#2a0e3d] flex justify-center items-start text-white antialiased font-sans">
       <div className="w-full max-w-[390px] bg-white relative shadow-2xl flex flex-col overflow-x-hidden min-h-screen">
+
+        {/* КРАСИВОЕ ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ (TOAST) */}
+        <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] transition-all duration-500 ease-out ${showToast ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-5 scale-95 pointer-events-none'}`}>
+          <div className="bg-[#e62010] text-white px-5 py-3 rounded-full shadow-[0_10px_40px_rgba(230,32,16,0.4)] text-[14px] font-bold font-sans text-center border-2 border-white/20 whitespace-nowrap flex items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 8V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 16.01L12.01 15.9989" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Пожалуйста, заполните форму полностью
+          </div>
+        </div>
 
         {/* СЕКЦИЯ 1: ГЛАВНЫЙ ЭКРАН (Опущена на 30 пикселей) */}
         <section className="bg-[#5a2082] relative pb-20 text-white">
@@ -255,7 +278,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС */}
+        {/* СЕКЦИЯ 4: ДЛЯ КОГО ЭТОТ КУРС (Иконка приподнята) */}
         <section className="bg-white text-black relative pt-16 pb-2 px-8 flex flex-col items-center z-10 overflow-hidden font-sans">
           <div className="absolute bottom-[40px] right-0 w-20 h-20 opacity-100 pointer-events-none rotate-[10deg]">
             <Image src="/images/wb-icon.png" alt="WB icon" width={112} height={112} className="object-contain" />
